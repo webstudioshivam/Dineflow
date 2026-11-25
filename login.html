@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Login – DineFlow</title>
+<link rel="stylesheet" href="css/auth.css">
+</head><body>
+<div class="center"><div class="box">
+  <a href="index.html" class="logo">Dine<span>Flow</span></a>
+  <h1>Welcome back</h1>
+  <p class="sub">Log in to your restaurant dashboard</p>
+  <form id="f">
+    <label>Email</label>
+    <input id="email" type="email" required autocomplete="email">
+    <label>Password</label>
+    <input id="pw" type="password" required autocomplete="current-password">
+    <button class="btn" id="btn">Log in</button>
+    <div class="msg" id="msg"></div>
+  </form>
+  <div class="alt">New here? <a href="register.html">Create your restaurant</a></div>
+</div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/config.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+dfClient.auth.getSession().then(({data}) => { if (data.session) location.href = 'dashboard.html'; });
+$('f').addEventListener('submit', async e => {
+  e.preventDefault();
+  $('btn').disabled = true; $('msg').className = 'msg'; $('msg').textContent = 'Logging in…';
+  const { error } = await dfClient.auth.signInWithPassword({ email: $('email').value.trim(), password: $('pw').value });
+  if (error) { $('msg').textContent = error.message; $('msg').className = 'msg err'; $('btn').disabled = false; return; }
+  location.href = 'dashboard.html';
+});
+</script>
+</body></html>

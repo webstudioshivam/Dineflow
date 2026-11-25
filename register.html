@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Register – DineFlow</title>
+<link rel="stylesheet" href="css/auth.css">
+</head><body>
+<div class="center"><div class="box">
+  <a href="index.html" class="logo">Dine<span>Flow</span></a>
+  <h1>Create your restaurant</h1>
+  <p class="sub">Start managing orders in minutes</p>
+  <form id="f">
+    <label>Restaurant name</label>
+    <input id="rname" placeholder="Royal Palace" required maxlength="60">
+    <label>Your page address</label>
+    <input id="slug" placeholder="royal-palace" required minlength="3" maxlength="40" pattern="[a-z0-9\-]{3,40}">
+    <div class="hint">dineflow.in/<b id="preview">your-name</b></div>
+    <label>Email</label>
+    <input id="email" type="email" placeholder="you@example.com" required autocomplete="email">
+    <label>Password</label>
+    <input id="pw" type="password" placeholder="At least 8 characters" required minlength="8" autocomplete="new-password">
+    <button class="btn" id="btn">Create account</button>
+    <div class="msg" id="msg"></div>
+  </form>
+  <div class="alt">Already have an account? <a href="login.html">Log in</a></div>
+</div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/config.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+const slugify = s => s.toLowerCase().trim().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,40);
+let slugEdited = false;
+$('rname').addEventListener('input', e => { if(!slugEdited){ $('slug').value = slugify(e.target.value); $('preview').textContent = $('slug').value || 'your-name'; }});
+$('slug').addEventListener('input', e => { slugEdited = true; e.target.value = slugify(e.target.value); $('preview').textContent = e.target.value || 'your-name'; });
+
+function say(t, cls){ $('msg').textContent = t; $('msg').className = 'msg ' + (cls||''); }
+
+$('f').addEventListener('submit', async e => {
+  e.preventDefault();
+  $('btn').disabled = true; say('Creating account…');
+  const { data, error } = await dfClient.auth.signUp({ email: $('email').value.trim(), password: $('pw').value });
+  if (error) { say(error.message, 'err'); $('btn').disabled = false; return; }
+  // Restaurant is created on first dashboard load (works even if email confirmation is on)
+  localStorage.setItem('df_pending', JSON.stringify({ name: $('rname').value.trim(), slug: $('slug').value }));
+  if (data.session) { location.href = 'dashboard.html'; }
+  else { say('Check your email to confirm, then log in.', 'ok'); $('btn').disabled = false; }
+});
+</script>
+</body></html>
