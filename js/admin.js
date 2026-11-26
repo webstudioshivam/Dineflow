@@ -10,6 +10,9 @@ const NAV = [
   ['admin-staff.html','Staff',['owner']],
   ['admin-settings.html','Settings',['owner']]
 ];
+const dfToday = () => new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' }); // yyyy-mm-dd
+const dfLive = r => !!r && r.is_active && (!r.paid_until || r.paid_until >= dfToday());
+
 function renderNav(active, role){
   $('nav').innerHTML = NAV.filter(n => n[2].includes(role))
     .map(([h,t]) => `<a href="${h}" class="${h===active?'on':''}">${t}</a>`).join('');
@@ -19,9 +22,10 @@ async function adminInit(active){
   const { data: { session } } = await dfClient.auth.getSession();
   if (!session) { location.href = 'login.html'; return null; }
   const { data: mem, error } = await dfClient.from('restaurant_members')
-    .select('role, restaurants(id,name,slug,plan_id)').eq('user_id', session.user.id).limit(1);
+    .select('role, restaurants(id,name,slug,plan_id,is_active,paid_until)').eq('user_id', session.user.id).limit(1);
   if (error || !mem.length) { location.href = 'dashboard.html'; return null; }
   const role = mem[0].role;
+  if (!dfLive(mem[0].restaurants)) { location.href = 'dashboard.html'; return null; }
   const page = NAV.find(n => n[0] === active);
   if (page && !page[2].includes(role)) { location.href = 'kitchen.html'; return null; }
   renderNav(active, role);
