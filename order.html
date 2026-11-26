@@ -2,57 +2,106 @@
 <html lang="en"><head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Menu</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600..800&family=Instrument+Sans:wght@400..700&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#0f0f10;--card:#181819;--line:#2a2a2c;--text:#f5f5f4;--muted:#a1a1a6;--accent:#ff7a1a;--err:#ff5c5c;--ok:#3ddc84}
-*{box-sizing:border-box;margin:0;padding:0}
-body{background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;line-height:1.45;padding-bottom:90px}
-header{padding:18px 16px 10px;border-bottom:1px solid var(--line);position:sticky;top:0;background:rgba(15,15,16,.95);backdrop-filter:blur(8px);z-index:5}
-header h1{font-size:20px}
-header .tb{color:var(--muted);font-size:13px}
-.chips{display:flex;gap:8px;overflow-x:auto;padding:10px 0 2px}
-.chip{flex:none;border:1px solid var(--line);background:transparent;color:var(--text);padding:6px 14px;border-radius:99px;font-size:14px;cursor:pointer}
-.chip.on{background:var(--accent);border-color:var(--accent);color:#111;font-weight:700}
-.wrap{padding:6px 16px}
-.cat{font-size:15px;color:var(--accent);margin:18px 0 6px;font-weight:700;letter-spacing:.3px}
-.dish{display:flex;gap:12px;padding:14px 0;border-bottom:1px solid var(--line)}
-.dish img{width:84px;height:84px;object-fit:cover;border-radius:12px;background:var(--card);flex:none}
-.dish .in{flex:1;min-width:0}
-.dish h3{font-size:16px}
-.dish p{color:var(--muted);font-size:13px;margin:2px 0}
-.dish .al{font-size:12px;color:#ffb36b}
-.dot{display:inline-block;width:11px;height:11px;border-radius:2px;margin-right:6px;border:2px solid}
-.dot.veg{border-color:var(--ok);background:var(--ok)}.dot.nv{border-color:var(--err);background:var(--err)}
-.pr{display:flex;justify-content:space-between;align-items:center;margin-top:6px}
-.pr b{font-size:16px}
-.add{background:transparent;border:1px solid var(--accent);color:var(--accent);padding:6px 18px;border-radius:8px;font-weight:700;cursor:pointer}
-.qty{display:flex;align-items:center;gap:12px;background:var(--accent);color:#111;border-radius:8px;padding:3px 8px;font-weight:800}
-.qty button{background:none;border:0;font-size:20px;font-weight:800;cursor:pointer;color:#111;width:24px}
-.bar{position:fixed;left:0;right:0;bottom:0;padding:12px 16px;background:var(--bg);border-top:1px solid var(--line);z-index:6}
-.btn{width:100%;background:var(--accent);color:#111;font-weight:800;border:0;padding:14px;border-radius:12px;font-size:16px;cursor:pointer;display:flex;justify-content:space-between}
+:root{--bg:#121110;--card:#1c1a17;--line:#2f2b26;--text:#f4efe8;--muted:#a59c90;--accent:#ff7a1a;--err:#ff6b5e;--ok:#5fd68a;--veg:#3fbf6b;
+  --display:"Bricolage Grotesque",ui-sans-serif,system-ui,sans-serif;--body:"Instrument Sans",ui-sans-serif,system-ui,sans-serif}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{background:var(--bg);color:var(--text);font:400 16px/1.45 var(--body);padding-bottom:96px;-webkit-font-smoothing:antialiased}
+h1,h2,h3{font-family:var(--display);letter-spacing:-.02em}
+button{font-family:inherit}
+
+header{position:sticky;top:0;z-index:5;background:rgba(18,17,16,.94);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);padding:16px 16px 10px;
+  background-image:radial-gradient(260px 120px at 100% 0,color-mix(in srgb,var(--accent) 22%,transparent),transparent)}
+header h1{font-size:25px;line-height:1.1}
+.tb{display:inline-block;margin-top:6px;font-size:12px;font-weight:600;color:var(--accent);border:1px solid color-mix(in srgb,var(--accent) 45%,transparent);border-radius:99px;padding:2px 10px}
+.chips{display:flex;gap:8px;overflow-x:auto;padding:12px 0 2px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;border:1px solid var(--line);background:transparent;color:var(--text);padding:7px 15px;border-radius:99px;font-size:14px;cursor:pointer;transition:all .2s}
+.chip.on{background:var(--accent);border-color:var(--accent);color:#1a1006;font-weight:700}
+
+.wrap{padding:4px 16px}
+.cat{font:700 13px var(--body);color:var(--accent);margin:22px 0 4px;letter-spacing:.02em}
+.dish{display:flex;gap:14px;padding:16px 0;border-bottom:1px solid var(--line)}
+.thumb{width:92px;height:92px;border-radius:16px;flex:none;object-fit:cover;background:linear-gradient(135deg,#3a2a1c,#221810);display:grid;place-items:center;font:700 34px var(--display);color:var(--accent);
+  transition:transform .25s;box-shadow:0 8px 20px rgba(0,0,0,.35)}
+.dish:active .thumb{transform:perspective(300px) rotateY(-14deg) rotateX(6deg) scale(.96)}
+.dish .in{flex:1;min-width:0;display:flex;flex-direction:column}
+.dish h3{font-size:17px;line-height:1.2;display:flex;align-items:flex-start;gap:7px}
+.dish p{color:var(--muted);font-size:13px;margin-top:3px}
+.dish .al{font-size:12px;color:#ffb36b;margin-top:3px}
+.dot{flex:none;width:12px;height:12px;border-radius:3px;margin-top:4px;border:2px solid}
+.dot.veg{border-color:var(--veg);background:var(--veg)}.dot.nv{border-color:var(--err);background:var(--err)}
+.pr{display:flex;justify-content:space-between;align-items:center;margin-top:auto;padding-top:8px}
+.pr b{font:700 17px var(--display)}
+.add{background:transparent;border:1.5px solid var(--accent);color:var(--accent);padding:7px 22px;border-radius:10px;font-weight:700;font-size:14px;cursor:pointer;transition:background .15s,color .15s}
+.add:active{background:var(--accent);color:#1a1006}
+.qty{display:flex;align-items:center;gap:6px;background:var(--accent);color:#1a1006;border-radius:10px;padding:2px 4px;font-weight:800}
+.qty button{background:none;border:0;font-size:20px;font-weight:800;cursor:pointer;color:#1a1006;width:30px;height:30px}
+
+.bar{position:fixed;left:0;right:0;bottom:0;padding:12px 16px calc(12px + env(safe-area-inset-bottom));background:linear-gradient(transparent,var(--bg) 35%);z-index:6}
+.bar.bump .btn{animation:bump .35s ease}
+@keyframes bump{40%{transform:scale(1.035)}}
+.btn{width:100%;background:var(--accent);color:#1a1006;font-weight:800;border:0;padding:15px 18px;border-radius:14px;font-size:16px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;text-decoration:none;box-shadow:0 10px 30px color-mix(in srgb,var(--accent) 30%,transparent)}
 .btn.plain{justify-content:center}
+.btn.ghost{background:transparent;color:var(--text);border:1px solid var(--line);box-shadow:none}
 .btn:disabled{opacity:.6}
-.sheet{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:10;display:none;align-items:flex-end}
+.fly{position:fixed;z-index:30;width:16px;height:16px;border-radius:50%;background:var(--accent);pointer-events:none;box-shadow:0 0 0 4px color-mix(in srgb,var(--accent) 30%,transparent)}
+
+.sheet{position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:10;display:none;align-items:flex-end}
 .sheet.show{display:flex}
-.sheet .in{background:var(--card);width:100%;max-height:85vh;overflow:auto;border-radius:20px 20px 0 0;padding:20px 16px 24px}
-.sheet h2{margin-bottom:10px}
-.ci{display:flex;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);font-size:15px}
-textarea{width:100%;background:#0f0f10;border:1px solid var(--line);color:var(--text);padding:10px;border-radius:10px;font-size:15px;margin-top:12px;font-family:inherit}
-.tot{display:flex;justify-content:space-between;font-weight:800;font-size:18px;margin:14px 0}
+.sheet.show .in{animation:rise .32s cubic-bezier(.2,.9,.3,1)}
+@keyframes rise{from{transform:translateY(50px);opacity:.3}}
+.sheet .in{background:var(--card);width:100%;max-height:88vh;overflow:auto;border-radius:24px 24px 0 0;padding:22px 18px calc(24px + env(safe-area-inset-bottom))}
+.sheet h2{font-size:24px;margin-bottom:8px}
+.ci{display:flex;justify-content:space-between;gap:10px;padding:11px 0;border-bottom:1px solid var(--line);font-size:15px}
+textarea{width:100%;background:var(--bg);border:1px solid var(--line);color:var(--text);padding:12px;border-radius:12px;font:inherit;font-size:15px;margin-top:14px}
+textarea:focus{outline:none;border-color:var(--accent)}
+.tot{display:flex;justify-content:space-between;font:700 20px var(--display);margin:16px 0 6px}
 .msg{font-size:14px;margin-top:10px;text-align:center}.err{color:var(--err)}
-.center{text-align:center;padding:60px 20px;color:var(--muted)}
-.steps{display:flex;justify-content:space-between;margin:22px 0}
-.st{flex:1;text-align:center;font-size:12px;color:var(--muted)}
-.st i{display:block;width:34px;height:34px;border-radius:50%;margin:0 auto 6px;background:var(--line);line-height:34px;font-style:normal}
-.st.on{color:var(--text)}.st.on i{background:var(--accent);color:#111;font-weight:800}
-.help{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
-.help button{flex:1;background:transparent;border:1px solid var(--line);color:var(--text);padding:10px;border-radius:10px;cursor:pointer;font-size:14px}
-.stars button{background:none;border:0;font-size:34px;color:var(--line);cursor:pointer}
-.stars button.on{color:var(--accent)}
-.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-top:16px}
-</style></head><body>
+.center{text-align:center;padding:70px 20px;color:var(--muted)}
 
-<div id="app"><div class="center">Loading menu…</div></div>
+.sk{margin:16px}
+.sk i{display:block;height:92px;border-radius:16px;margin-bottom:14px;background:linear-gradient(90deg,var(--card) 25%,#26231f 50%,var(--card) 75%);background-size:200% 100%;animation:sh 1.2s infinite}
+@keyframes sh{to{background-position:-200% 0}}
 
+/* order status */
+.hero{text-align:center;padding:26px 0 6px}
+.hero h2{font-size:28px;margin-top:22px}
+.hero p{color:var(--muted);margin-top:4px;font-size:15px}
+.scene{perspective:700px;width:96px;height:96px;margin:6px auto 0}
+.cube{position:relative;width:96px;height:96px;transform-style:preserve-3d;animation:spin 8s linear infinite}
+@keyframes spin{from{transform:rotateX(-18deg) rotateY(0)}to{transform:rotateX(-18deg) rotateY(360deg)}}
+.cube i{position:absolute;inset:0;display:grid;place-items:center;font-size:42px;font-style:normal;background:rgba(28,26,23,.88);border:1px solid var(--line);border-radius:16px;backface-visibility:hidden}
+.cube i:nth-child(1){transform:translateZ(48px)}
+.cube i:nth-child(2){transform:rotateY(90deg) translateZ(48px)}
+.cube i:nth-child(3){transform:rotateY(180deg) translateZ(48px)}
+.cube i:nth-child(4){transform:rotateY(-90deg) translateZ(48px)}
+.cube i:nth-child(5){transform:rotateX(90deg) translateZ(48px)}
+.cube i:nth-child(6){transform:rotateX(-90deg) translateZ(48px)}
+.done{width:96px;height:96px;border-radius:50%;margin:6px auto 0;display:grid;place-items:center;font-size:46px;background:color-mix(in srgb,var(--ok) 18%,var(--card));border:2px solid var(--ok);animation:pop .5s cubic-bezier(.2,1.4,.4,1)}
+@keyframes pop{from{transform:scale(.4);opacity:0}}
+.steps{display:flex;justify-content:space-between;margin:26px 0 8px;position:relative}
+.steps::before{content:"";position:absolute;left:12%;right:12%;top:17px;height:2px;background:var(--line)}
+.st{flex:1;text-align:center;font-size:12px;color:var(--muted);position:relative}
+.st i{display:block;width:36px;height:36px;border-radius:50%;margin:0 auto 6px;background:var(--bg);border:2px solid var(--line);line-height:32px;font-style:normal;transition:all .3s}
+.st.on{color:var(--text)}.st.on i{background:var(--accent);border-color:var(--accent);color:#1a1006;font-weight:800}
+.st.cur i{animation:ring 1.8s ease-out infinite}
+@keyframes ring{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--accent) 55%,transparent)}100%{box-shadow:0 0 0 12px transparent}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px;margin-top:14px}
+.help{display:flex;gap:8px;margin-top:10px}
+.help button{flex:1;background:transparent;border:1px solid var(--line);color:var(--text);padding:12px 6px;border-radius:12px;cursor:pointer;font-size:14px;transition:border-color .2s}
+.help button:active{border-color:var(--accent)}
+.stars button{background:none;border:0;font-size:36px;color:var(--line);cursor:pointer;transition:transform .15s,color .15s}
+.stars button.on{color:var(--accent);transform:scale(1.12)}
+.cf{position:fixed;top:30vh;left:50%;width:9px;height:14px;z-index:40;pointer-events:none;animation:cf 1.5s cubic-bezier(.15,.7,.3,1) forwards}
+@keyframes cf{to{transform:translate(var(--dx),var(--dy)) rotate(var(--rot));opacity:0}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head><body>
+
+<div id="app"><div class="sk"><i></i><i></i><i></i><i></i></div></div>
 <div class="sheet" id="sheet"><div class="in" id="sheetIn"></div></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -60,14 +109,15 @@ textarea{width:100%;background:#0f0f10;border:1px solid var(--line);color:var(--
 <script>
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const P = new URLSearchParams(location.search);
 const slug = P.get('r'), tableId = P.get('t');
-let R, T, cats = [], items = [], cart = {}, vegOnly = false, activeCat = 'all', orderId = null, pollTimer;
+let R, T, cats = [], items = [], cart = {}, vegOnly = false, activeCat = 'all', orderId = null, pollTimer, lastKey = null, justAdded = false, celebrate = false, rating = 0;
 
 async function init(){
-  if (!slug) return fail('Invalid QR code.');
+  if (!slug) return fail('This QR code is not valid. Please ask the staff for help.');
   const { data: r } = await dfClient.from('restaurants').select('id,name,brand_color,upi_id').eq('slug', slug).eq('is_active', true).maybeSingle();
-  if (!r) return fail('Restaurant not found.');
+  if (!r) return fail('This restaurant is not taking orders right now.');
   R = r; document.title = R.name + ' – Menu';
   if (R.brand_color && /^#[0-9a-fA-F]{6}$/.test(R.brand_color)) document.documentElement.style.setProperty('--accent', R.brand_color);
   if (tableId) { const { data: t } = await dfClient.from('dining_tables').select('id,label').eq('id', tableId).eq('restaurant_id', R.id).maybeSingle(); T = t; }
@@ -92,17 +142,38 @@ function renderMenu(){
   const total = Object.entries(cart).reduce((s,[id,q]) => s + q * +items.find(m => m.id === id).price, 0);
   const count = Object.values(cart).reduce((a,b) => a + b, 0);
   $('app').innerHTML = `
-    <header><h1>${esc(R.name)}</h1><div class="tb">${T ? 'Table ' + esc(T.label) : 'No table selected'}</div><div class="chips">${chips}</div></header>
-    <div class="wrap">${groups.map(g => `<div class="cat">${esc(g.name.toUpperCase())}</div>` + g.list.map(dish).join('')).join('') || '<div class="center">No dishes available yet.</div>'}</div>
-    ${count ? `<div class="bar"><button class="btn" data-cart="1"><span>${count} item${count>1?'s':''}</span><span>View cart · ₹${total.toFixed(2)}</span></button></div>` : ''}`;
+    <header><h1>${esc(R.name)}</h1>${T ? `<span class="tb">Table ${esc(T.label)}</span>` : ''}<div class="chips">${chips}</div></header>
+    <div class="wrap">${groups.map(g => `<div class="cat">${esc(g.name)}</div>` + g.list.map(dish).join('')).join('') || '<div class="center">No dishes available yet.</div>'}</div>
+    ${count ? `<div class="bar ${justAdded ? 'bump' : ''}"><button class="btn" data-cart="1"><span>${count} item${count>1?'s':''}</span><span>View cart · ₹${total.toFixed(2)}</span></button></div>` : ''}`;
+  justAdded = false;
 }
 function dish(m){
   const q = cart[m.id] || 0;
-  return `<div class="dish">${m.image_url ? `<img src="${esc(m.image_url)}" alt="" loading="lazy">` : ''}
+  const thumb = m.image_url ? `<img class="thumb" src="${esc(m.image_url)}" alt="" loading="lazy">` : `<div class="thumb">${esc((m.name || '?').trim().charAt(0).toUpperCase())}</div>`;
+  return `<div class="dish">${thumb}
     <div class="in"><h3><span class="dot ${m.is_veg?'veg':'nv'}"></span>${esc(m.name)}</h3>
     ${m.description ? `<p>${esc(m.description)}</p>` : ''}
     ${(m.allergens||[]).length ? `<div class="al">⚠ Contains: ${m.allergens.map(esc).join(', ')}</div>` : ''}
-    <div class="pr"><b>₹${esc(m.price)}</b>${q ? `<div class="qty"><button data-dec="${m.id}">−</button>${q}<button data-inc="${m.id}">+</button></div>` : `<button class="add" data-inc="${m.id}">ADD</button>`}</div></div></div>`;
+    <div class="pr"><b>₹${esc(m.price)}</b>${q ? `<div class="qty"><button data-dec="${m.id}" aria-label="Remove one">−</button>${q}<button data-inc="${m.id}" aria-label="Add one">+</button></div>` : `<button class="add" data-inc="${m.id}">ADD</button>`}</div></div></div>`;
+}
+
+/* a dot flies from the button to the cart bar */
+function fly(from){
+  if (calm || !from) return;
+  const a = from.getBoundingClientRect(), d = document.createElement('div'); d.className = 'fly';
+  d.style.left = (a.left + a.width / 2 - 8) + 'px'; d.style.top = (a.top + a.height / 2 - 8) + 'px'; document.body.appendChild(d);
+  const dx = innerWidth / 2 - (a.left + a.width / 2), dy = innerHeight - 44 - (a.top + a.height / 2);
+  d.animate([{ transform: 'translate(0,0) scale(1)', opacity: 1 }, { transform: `translate(${dx * .6}px,${dy * .35 - 60}px) scale(1.2)`, opacity: 1, offset: .45 }, { transform: `translate(${dx}px,${dy}px) scale(.3)`, opacity: .4 }],
+    { duration: 650, easing: 'cubic-bezier(.4,0,.2,1)' }).onfinish = () => d.remove();
+}
+function burst(){
+  if (calm) return;
+  const cols = ['#ff7a1a', '#ffd24d', '#5fd68a', '#f4efe8', '#ff6b5e'];
+  for (let i = 0; i < 28; i++) {
+    const c = document.createElement('i'); c.className = 'cf'; const ang = Math.random() * Math.PI * 2, dist = 90 + Math.random() * 160;
+    c.style.background = cols[i % cols.length]; c.style.setProperty('--dx', Math.cos(ang) * dist + 'px'); c.style.setProperty('--dy', (Math.sin(ang) * dist + 120) + 'px'); c.style.setProperty('--rot', (Math.random() * 720 - 360) + 'deg');
+    document.body.appendChild(c); setTimeout(() => c.remove(), 1600);
+  }
 }
 
 function openCart(){
@@ -111,9 +182,9 @@ function openCart(){
   $('sheetIn').innerHTML = `<h2>Your order</h2>${rows}
     <textarea id="note" rows="2" maxlength="300" placeholder="Special instructions (optional)"></textarea>
     <div class="tot"><span>Total</span><span>₹${total.toFixed(2)}</span></div>
-    <div style="font-size:13px;color:var(--muted)">Pay at the counter or to the waiter after your meal.</div>
-    <button class="btn plain" id="place" style="margin-top:14px">Place order</button>
-    <button class="btn plain" data-close="1" style="margin-top:8px;background:transparent;color:var(--text);border:1px solid var(--line)">Back to menu</button>
+    <div style="font-size:13px;color:var(--muted)">${R.upi_id ? 'You can pay by UPI after ordering, or at the counter.' : 'Pay at the counter or to the waiter after your meal.'}</div>
+    <button class="btn plain" id="place" style="margin-top:16px">Place order</button>
+    <button class="btn plain ghost" data-close="1" style="margin-top:8px">Back to menu</button>
     <div class="msg err" id="cerr"></div>`;
   $('sheet').classList.add('show');
 }
@@ -122,47 +193,54 @@ async function place(){
   const payload = Object.entries(cart).map(([item_id, qty]) => ({ item_id, qty }));
   const { data, error } = await dfClient.rpc('place_order', { p_restaurant: R.id, p_table: T ? T.id : null, p_items: payload, p_note: $('note').value.trim() || null });
   if (error) { $('cerr').textContent = error.message; $('place').disabled = false; return; }
-  orderId = data; localStorage.setItem('df_order_' + R.id, orderId); cart = {};
+  orderId = data; localStorage.setItem('df_order_' + R.id, orderId); cart = {}; celebrate = true;
   $('sheet').classList.remove('show'); track();
 }
 
 const STEPS = [['pending','Received','📝'],['preparing','Preparing','👨‍🍳'],['ready','Ready','✅'],['served','Served','🍽️']];
+const HEAD = { pending: ['Order received', 'The kitchen has your order.'], preparing: ['Being prepared', 'Your food is on the way.'], ready: ['Ready!', 'Your order is ready. Enjoy.'], served: ['Enjoy your meal', 'Thank you for ordering.'], cancelled: ['Order cancelled', 'Please ask the staff for help.'] };
+
 async function track(){
-  clearInterval(pollTimer);
+  clearInterval(pollTimer); lastKey = null;
   const draw = async () => {
     const { data } = await dfClient.rpc('get_order_status', { p_order: orderId });
     const o = data && data[0];
     if (!o) { localStorage.removeItem('df_order_' + R.id); orderId = null; clearInterval(pollTimer); return renderMenu(); }
-    const idx = STEPS.findIndex(s => s[0] === o.status);
-    $('app').innerHTML = `<header><h1>${esc(R.name)}</h1><div class="tb">${T ? 'Table ' + esc(T.label) : ''}</div></header>
+    const key = [o.status, o.payment_status, o.total].join('|');
+    if (key === lastKey) return;                 // nothing changed: keep animations running
+    lastKey = key;
+    const idx = STEPS.findIndex(s => s[0] === o.status), fin = o.status === 'ready' || o.status === 'served', h = HEAD[o.status] || HEAD.pending;
+    const upi = o.payment_status !== 'paid' && R.upi_id && o.status !== 'cancelled'
+      ? `<a class="btn plain" style="margin-top:12px" href="${esc('upi://pay?pa=' + encodeURIComponent(R.upi_id) + '&pn=' + encodeURIComponent(R.name) + '&am=' + Number(o.total).toFixed(2) + '&cu=INR&tn=' + encodeURIComponent('Order ' + (T ? 'Table ' + T.label : '')))}">Pay ₹${Number(o.total).toFixed(2)} with UPI</a><div style="font-size:12px;color:var(--muted);margin-top:8px;text-align:center">After paying, staff will confirm your payment.</div>` : '';
+    $('app').innerHTML = `<header><h1>${esc(R.name)}</h1>${T ? `<span class="tb">Table ${esc(T.label)}</span>` : ''}</header>
       <div class="wrap">
-      ${o.status === 'cancelled' ? '<div class="card">This order was cancelled. Please ask the staff.</div>' : `
-      <div class="steps">${STEPS.map((s,i) => `<div class="st ${i<=idx?'on':''}"><i>${s[2]}</i>${s[1]}</div>`).join('')}</div>`}
-      <div class="card"><b>Total: ₹${Number(o.total).toFixed(2)}</b><div style="color:var(--muted);font-size:14px;margin-top:4px">${o.payment_status === 'paid' ? '✅ Paid' : (R.upi_id ? 'Pay online, or at the counter.' : 'Payment pending, please pay at the counter.')}</div>
-        ${o.payment_status !== 'paid' && R.upi_id && o.status !== 'cancelled' ? `<a class="btn plain" style="margin-top:12px;text-decoration:none" href="${esc('upi://pay?pa=' + encodeURIComponent(R.upi_id) + '&pn=' + encodeURIComponent(R.name) + '&am=' + Number(o.total).toFixed(2) + '&cu=INR&tn=' + encodeURIComponent('Order ' + (T ? 'Table ' + T.label : '')))}">Pay ₹${Number(o.total).toFixed(2)} with UPI</a><div style="font-size:12px;color:var(--muted);margin-top:8px">After paying, staff will confirm your payment.</div>` : ''}</div>
+      <div class="hero">${o.status === 'cancelled' ? '' : fin ? '<div class="done">✓</div>' : '<div class="scene"><div class="cube"><i>🍳</i><i>🍽️</i><i>🥘</i><i>🫓</i><i>🍛</i><i>☕</i></div></div>'}
+        <h2>${h[0]}</h2><p>${h[1]}</p></div>
+      ${o.status === 'cancelled' ? '' : `<div class="steps">${STEPS.map((s,i) => `<div class="st ${i<=idx?'on':''} ${i===idx?'cur':''}"><i>${i<idx?'✓':s[2]}</i>${s[1]}</div>`).join('')}</div>`}
+      <div class="card"><div style="display:flex;justify-content:space-between;align-items:center"><b style="font:700 20px var(--display)">₹${Number(o.total).toFixed(2)}</b><span style="color:${o.payment_status === 'paid' ? 'var(--ok)' : 'var(--muted)'};font-size:14px">${o.payment_status === 'paid' ? '✅ Paid' : (R.upi_id ? 'Pay online or at the counter' : 'Pay at the counter')}</span></div>${upi}</div>
       <div class="card"><b>Need something?</b><div class="help">
         <button data-call="water">💧 Water</button><button data-call="napkin">🧻 Napkins</button><button data-call="assistance">🙋 Waiter</button></div>
         <div class="msg" id="cmsg"></div></div>
-      ${o.status === 'served' || o.status === 'ready' ? `<div class="card"><b>How was it?</b><div class="stars" id="stars">${[1,2,3,4,5].map(n => `<button data-star="${n}">★</button>`).join('')}</div>
+      ${fin ? `<div class="card"><b>How was it?</b><div class="stars" id="stars">${[1,2,3,4,5].map(n => `<button data-star="${n}" aria-label="${n} stars">★</button>`).join('')}</div>
         <textarea id="fbt" rows="2" maxlength="500" placeholder="Comments (optional)"></textarea>
-        <button class="btn plain" id="fbsend" style="margin-top:10px">Send feedback</button><div class="msg" id="fmsg"></div></div>` : ''}
-      <button class="btn plain" data-neworder="1" style="margin-top:18px;background:transparent;color:var(--text);border:1px solid var(--line)">Order more</button>
+        <button class="btn plain" id="fbsend" style="margin-top:12px">Send feedback</button><div class="msg" id="fmsg"></div></div>` : ''}
+      <button class="btn plain ghost" data-neworder="1" style="margin-top:18px">Order more</button>
       </div>`;
+    if (celebrate) { celebrate = false; burst(); }
   };
-  await draw(); pollTimer = setInterval(() => { if (!document.getElementById('stars')) draw(); }, 5000);
+  await draw(); pollTimer = setInterval(draw, 5000);
 }
 
-let rating = 0;
 document.addEventListener('click', async e => {
-  const t = e.target.closest('button'); if (!t) return; const d = t.dataset;
+  const t = e.target.closest('button, a'); if (!t) return; const d = t.dataset;
   if (d.cat) { activeCat = d.cat === 'all' ? 'all' : d.cat; renderMenu(); }
   if (d.veg) { vegOnly = !vegOnly; renderMenu(); }
-  if (d.inc) { cart[d.inc] = (cart[d.inc] || 0) + 1; renderMenu(); }
+  if (d.inc) { fly(t); cart[d.inc] = (cart[d.inc] || 0) + 1; justAdded = true; renderMenu(); }
   if (d.dec) { cart[d.dec] = (cart[d.dec] || 1) - 1; if (cart[d.dec] <= 0) delete cart[d.dec]; renderMenu(); }
   if (d.cart) openCart();
   if (d.close) $('sheet').classList.remove('show');
   if (t.id === 'place') place();
-  if (d.neworder) { clearInterval(pollTimer); localStorage.removeItem('df_order_' + R.id); orderId = null; renderMenu(); }
+  if (d.neworder) { clearInterval(pollTimer); localStorage.removeItem('df_order_' + R.id); orderId = null; lastKey = null; renderMenu(); }
   if (d.call) {
     if (!T) { $('cmsg').textContent = 'Table not detected. Please ask the staff.'; $('cmsg').className = 'msg err'; return; }
     const { error } = await dfClient.rpc('call_waiter', { p_restaurant: R.id, p_table: T.id, p_reason: d.call });
@@ -170,7 +248,7 @@ document.addEventListener('click', async e => {
   }
   if (d.star) { rating = +d.star; document.querySelectorAll('#stars button').forEach(b => b.classList.toggle('on', +b.dataset.star <= rating)); }
   if (t.id === 'fbsend') {
-    if (!rating) { $('fmsg').textContent = 'Please tap a star rating.'; $('fmsg').className = 'msg err'; return; }
+    if (!rating) { $('fmsg').textContent = 'Tap a star rating first.'; $('fmsg').className = 'msg err'; return; }
     const { error } = await dfClient.rpc('submit_feedback', { p_order: orderId, p_rating: rating, p_comment: $('fbt').value.trim() || null });
     $('fmsg').textContent = error ? error.message : 'Thank you! 🧡'; $('fmsg').className = 'msg ' + (error ? 'err' : '');
     if (!error) t.disabled = true;
