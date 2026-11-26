@@ -23,6 +23,9 @@
 .tag.u{background:#33201a;color:#ff9a4d}
 .bar2{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 </style>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0f0f10">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
 </head><body>
 <div class="top"><a class="logo" href="dashboard.html">Dine<span>Flow</span></a><button class="btn ghost" id="out">Log out</button></div>
 <div class="nav" id="nav"></div>
@@ -111,4 +114,5 @@ adminInit('kitchen.html').then(x => {
   setInterval(load, 20000); // fallback + refresh "x min ago"
 });
 </script>
+<script>if('serviceWorker' in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));</script>
 </body></html>

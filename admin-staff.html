@@ -3,6 +3,9 @@
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Staff – DineFlow</title>
 <link rel="stylesheet" href="css/auth.css">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0f0f10">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
 </head><body>
 <div class="top"><a class="logo" href="dashboard.html">Dine<span>Flow</span></a><button class="btn ghost" id="out">Log out</button></div>
 <div class="nav" id="nav"></div>
@@ -56,4 +59,5 @@ document.addEventListener('click', async e => {
 });
 adminInit('admin-staff.html').then(x => { if (x) { R = x.r; load(); } });
 </script>
+<script>if('serviceWorker' in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));</script>
 </body></html>

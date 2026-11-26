@@ -3,6 +3,9 @@
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Dashboard – DineFlow</title>
 <link rel="stylesheet" href="css/auth.css">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0f0f10">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
 </head><body>
 <div class="top">
   <a class="logo" href="dashboard.html">Dine<span>Flow</span></a>
@@ -55,7 +58,13 @@ async function init(){
       <div class="stat"><b>0</b><span>Tables</span></div>
       <div class="stat"><b>0</b><span>Menu items</span></div>
     </div>
-    <div class="panel"><b>Next:</b> Waiter view &amp; analytics <span class="soon">soon</span> · Online payments <span class="soon">soon</span></div>`;
+    <div class="panel"><b>Quick links</b>
+      <div class="row" style="margin-top:10px">
+        <a class="btn sm ghost" style="text-decoration:none;text-align:center" href="admin-menu.html">Menu</a>
+        <a class="btn sm ghost" style="text-decoration:none;text-align:center" href="admin-tables.html">Tables &amp; QR</a>
+        <a class="btn sm ghost" style="text-decoration:none;text-align:center" href="kitchen.html">Kitchen</a>
+        <a class="btn sm ghost" style="text-decoration:none;text-align:center" href="admin-analytics.html">Analytics</a>
+      </div></div>`;
   renderNav('dashboard.html', mem[0].role);
   dfClient.rpc('is_platform_admin').then(({ data }) => { if (data) $('nav').insertAdjacentHTML('beforeend', '<a href="super-admin.html">Super Admin</a>'); });
   const cnt = async tb => (await dfClient.from(tb).select('id', { count: 'exact', head: true }).eq('restaurant_id', r.id)).count || 0;
@@ -67,4 +76,5 @@ async function init(){
 }
 init();
 </script>
+<script>if('serviceWorker' in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));</script>
 </body></html>

@@ -18,6 +18,9 @@
 .tr .meter{flex:1;height:8px;background:#0f0f10;border-radius:99px;overflow:hidden}
 .tr .meter i{display:block;height:100%;background:var(--accent)}
 </style>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0f0f10">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
 </head><body>
 <div class="top"><a class="logo" href="dashboard.html">Dine<span>Flow</span></a><button class="btn ghost" id="out">Log out</button></div>
 <div class="nav" id="nav"></div>
@@ -76,4 +79,5 @@ document.querySelector('.rng').addEventListener('click', e => {
 });
 adminInit('admin-analytics.html').then(x => { if (x) { R = x.r; load(); } });
 </script>
+<script>if('serviceWorker' in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));</script>
 </body></html>

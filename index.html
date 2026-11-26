@@ -51,6 +51,9 @@
   footer{border-top:1px solid var(--line);padding:30px 0;color:var(--muted);font-size:14px;text-align:center}
   @media(max-width:640px){.links a.hide{display:none}.hero{padding:60px 0 40px}}
 </style>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0f0f10">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
 </head>
 <body>
 
@@ -124,5 +127,6 @@
 
 <footer><div class="wrap">© <span id="y"></span> DineFlow. One Platform. Every Restaurant.</div></footer>
 <script>document.getElementById('y').textContent=new Date().getFullYear()</script>
+<script>if('serviceWorker' in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));</script>
 </body>
 </html>
