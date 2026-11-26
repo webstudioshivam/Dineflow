@@ -26,6 +26,11 @@ async function init(){
     .select('role, restaurants(id, name, slug, plan_id)').eq('user_id', session.user.id).limit(1);
   if (error) { $('app').innerHTML = '<p style="color:var(--err)">' + esc(error.message) + '</p>'; return; }
 
+  if (!mem.length) {
+    await dfClient.rpc('claim_invites');
+    ({ data: mem } = await dfClient.from('restaurant_members').select('role, restaurants(id, name, slug, plan_id)').eq('user_id', session.user.id).limit(1));
+  }
+
   // First login after registering: create the restaurant
   if (!mem.length) {
     const pending = JSON.parse(localStorage.getItem('df_pending') || 'null');
@@ -36,6 +41,7 @@ async function init(){
     return init();
   }
 
+  if (['kitchen','waiter'].includes(mem[0].role)) { location.href = 'kitchen.html'; return; }
   const r = mem[0].restaurants;
   $('app').innerHTML = `
     <h2>${esc(r.name)}</h2>
@@ -48,8 +54,7 @@ async function init(){
       <div class="stat"><b>0</b><span>Menu items</span></div>
     </div>
     <div class="panel"><b>Next:</b> Waiter view &amp; analytics <span class="soon">soon</span> · Online payments <span class="soon">soon</span></div>`;
-  const links = [['dashboard.html','Home'],['admin-menu.html','Menu'],['admin-tables.html','Tables & QR'],['kitchen.html','Kitchen'],['admin-analytics.html','Analytics']];
-  $('nav').innerHTML = links.map(([h,t]) => `<a href="${h}" class="${h==='dashboard.html'?'on':''}">${t}</a>`).join('');
+  renderNav('dashboard.html', mem[0].role);
   const cnt = async tb => (await dfClient.from(tb).select('id', { count: 'exact', head: true }).eq('restaurant_id', r.id)).count || 0;
   const [nt, nm] = await Promise.all([cnt('dining_tables'), cnt('menu_items')]);
   const st = document.querySelectorAll('.stat b'); st[2].textContent = nt; st[3].textContent = nm;
