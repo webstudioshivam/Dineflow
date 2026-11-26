@@ -7,7 +7,8 @@ const NAV = [
   ['admin-tables.html','Tables & QR',['owner','manager','waiter']],
   ['kitchen.html','Kitchen',['owner','manager','kitchen','waiter']],
   ['admin-analytics.html','Analytics',['owner','manager']],
-  ['admin-staff.html','Staff',['owner']]
+  ['admin-staff.html','Staff',['owner']],
+  ['admin-settings.html','Settings',['owner']]
 ];
 function renderNav(active, role){
   $('nav').innerHTML = NAV.filter(n => n[2].includes(role))
