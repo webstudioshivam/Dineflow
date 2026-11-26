@@ -8,13 +8,13 @@
   <a class="logo" href="dashboard.html">Dine<span>Flow</span></a>
   <button class="btn ghost" id="out">Log out</button>
 </div>
+<div class="nav" id="nav"></div>
 <div class="wrap" id="app"><p style="color:var(--muted)">Loading…</p></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/config.js"></script>
+<script src="js/admin.js"></script>
 <script>
-const $ = id => document.getElementById(id);
-const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
 $('out').onclick = async () => { await dfClient.auth.signOut(); location.href = 'login.html'; };
 
@@ -47,7 +47,12 @@ async function init(){
       <div class="stat"><b>0</b><span>Tables</span></div>
       <div class="stat"><b>0</b><span>Menu items</span></div>
     </div>
-    <div class="panel"><b>Next:</b> Menu manager <span class="soon">coming next</span> · Tables &amp; QR <span class="soon">soon</span> · Kitchen <span class="soon">soon</span></div>`;
+    <div class="panel"><b>Next:</b> Customer ordering page <span class="soon">soon</span> · Kitchen <span class="soon">soon</span></div>`;
+  const links = [['dashboard.html','Home'],['admin-menu.html','Menu'],['admin-tables.html','Tables & QR']];
+  $('nav').innerHTML = links.map(([h,t]) => `<a href="${h}" class="${h==='dashboard.html'?'on':''}">${t}</a>`).join('');
+  const cnt = async tb => (await dfClient.from(tb).select('id', { count: 'exact', head: true }).eq('restaurant_id', r.id)).count || 0;
+  const [nt, nm] = await Promise.all([cnt('dining_tables'), cnt('menu_items')]);
+  const st = document.querySelectorAll('.stat b'); st[2].textContent = nt; st[3].textContent = nm;
 }
 init();
 </script>

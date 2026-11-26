@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Menu – DineFlow</title>
+<link rel="stylesheet" href="css/auth.css">
+</head><body>
+<div class="top"><a class="logo" href="dashboard.html">Dine<span>Flow</span></a><button class="btn ghost" id="out">Log out</button></div>
+<div class="nav" id="nav"></div>
+<div class="wrap">
+  <h2>Menu</h2>
+
+  <div class="panel">
+    <b>Categories</b>
+    <form id="catForm" class="row" style="margin-top:10px;align-items:flex-end">
+      <input id="catName" placeholder="e.g. Starters, Main Course" required maxlength="40">
+      <button class="btn sm" style="flex:0">Add</button>
+    </form>
+    <div id="cats" style="margin-top:8px"></div>
+  </div>
+
+  <div class="panel">
+    <b id="formTitle">Add dish</b>
+    <form id="itemForm">
+      <div class="row">
+        <div><label>Name</label><input id="name" required maxlength="80"></div>
+        <div><label>Price (₹)</label><input id="price" type="number" min="0" step="0.01" required inputmode="decimal"></div>
+      </div>
+      <label>Category</label><select id="cat"></select>
+      <label>Description</label><textarea id="desc" rows="2" maxlength="300"></textarea>
+      <label>Image URL (optional)</label><input id="img" type="url" placeholder="https://...">
+      <label>Allergens (comma separated)</label><input id="alg" placeholder="nuts, dairy, gluten">
+      <div class="chk"><input type="checkbox" id="veg" checked><label for="veg" style="margin:0">Vegetarian</label></div>
+      <div class="chk"><input type="checkbox" id="avail" checked><label for="avail" style="margin:0">Available</label></div>
+      <div class="row" style="margin-top:6px">
+        <button class="btn" id="saveBtn">Save dish</button>
+        <button type="button" class="btn ghost" id="cancel" style="display:none;margin-top:20px;width:100%">Cancel edit</button>
+      </div>
+      <div class="msg" id="msg"></div>
+    </form>
+  </div>
+
+  <div class="panel"><b>Dishes</b><div id="items" style="margin-top:6px"></div></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/config.js"></script>
+<script src="js/admin.js"></script>
+<script>
+let R, cats = [], items = [], editId = null;
+const say = (t,c) => { $('msg').textContent = t; $('msg').className = 'msg ' + (c||''); };
+
+async function load(){
+  const [c, i] = await Promise.all([
+    dfClient.from('menu_categories').select('*').eq('restaurant_id', R.id).order('sort_order').order('name'),
+    dfClient.from('menu_items').select('*').eq('restaurant_id', R.id).order('name')
+  ]);
+  cats = c.data || []; items = i.data || [];
+  render();
+}
+function render(){
+  $('cats').innerHTML = cats.length ? cats.map(c => `<div class="item"><div class="info">${esc(c.name)}</div><div class="acts"><button class="btn sm danger" data-delcat="${c.id}">Delete</button></div></div>`).join('') : '<p style="color:var(--muted);font-size:14px">No categories yet.</p>';
+  $('cat').innerHTML = '<option value="">No category</option>' + cats.map(c => `<option value="${c.id}">${esc(c.name)}</option>`).join('');
+  const cname = id => (cats.find(c => c.id === id) || {}).name || 'Uncategorised';
+  $('items').innerHTML = items.length ? items.map(m => `
+    <div class="item">
+      ${m.image_url ? `<img src="${esc(m.image_url)}" alt="">` : '<img alt="">'}
+      <div class="info"><span class="dot ${m.is_veg?'veg':'nv'}"></span><b>${esc(m.name)}</b> · ₹${esc(m.price)}
+        <small>${esc(cname(m.category_id))}${m.is_available?'':' · Hidden'}</small></div>
+      <div class="acts">
+        <button class="btn sm ghost" data-toggle="${m.id}">${m.is_available?'Hide':'Show'}</button>
+        <button class="btn sm ghost" data-edit="${m.id}">Edit</button>
+        <button class="btn sm danger" data-del="${m.id}">Delete</button>
+      </div></div>`).join('') : '<p style="color:var(--muted);font-size:14px">No dishes yet. Add your first one above.</p>';
+}
+function resetForm(){
+  editId = null; $('itemForm').reset(); $('veg').checked = true; $('avail').checked = true;
+  $('formTitle').textContent = 'Add dish'; $('cancel').style.display = 'none'; say('');
+}
+
+$('catForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const { error } = await dfClient.from('menu_categories').insert({ restaurant_id: R.id, name: $('catName').value.trim(), sort_order: cats.length });
+  if (error) return alert(error.message);
+  $('catName').value = ''; load();
+});
+
+$('itemForm').addEventListener('submit', async e => {
+  e.preventDefault(); $('saveBtn').disabled = true; say('Saving…');
+  const row = {
+    restaurant_id: R.id, category_id: $('cat').value || null, name: $('name').value.trim(),
+    description: $('desc').value.trim() || null, price: parseFloat($('price').value),
+    image_url: $('img').value.trim() || null, is_veg: $('veg').checked, is_available: $('avail').checked,
+    allergens: $('alg').value.split(',').map(s => s.trim().toLowerCase()).filter(Boolean)
+  };
+  const q = editId ? dfClient.from('menu_items').update(row).eq('id', editId) : dfClient.from('menu_items').insert(row);
+  const { error } = await q;
+  $('saveBtn').disabled = false;
+  if (error) return say(error.message, 'err');
+  resetForm(); say('Saved ✓', 'ok'); load();
+});
+$('cancel').onclick = resetForm;
+
+document.addEventListener('click', async e => {
+  const t = e.target;
+  if (t.dataset.delcat) { if (confirm('Delete this category? Dishes stay but become uncategorised.')) { await dfClient.from('menu_categories').delete().eq('id', t.dataset.delcat); load(); } }
+  if (t.dataset.del) { if (confirm('Delete this dish?')) { await dfClient.from('menu_items').delete().eq('id', t.dataset.del); load(); } }
+  if (t.dataset.toggle) { const m = items.find(x => x.id === t.dataset.toggle); await dfClient.from('menu_items').update({ is_available: !m.is_available }).eq('id', m.id); load(); }
+  if (t.dataset.edit) {
+    const m = items.find(x => x.id === t.dataset.edit); editId = m.id;
+    $('name').value = m.name; $('price').value = m.price; $('cat').value = m.category_id || '';
+    $('desc').value = m.description || ''; $('img').value = m.image_url || ''; $('alg').value = (m.allergens || []).join(', ');
+    $('veg').checked = m.is_veg; $('avail').checked = m.is_available;
+    $('formTitle').textContent = 'Edit dish'; $('cancel').style.display = 'block';
+    $('itemForm').scrollIntoView({ behavior: 'smooth' });
+  }
+});
+
+adminInit('admin-menu.html').then(x => { if (x) { R = x.r; load(); } });
+</script>
+</body></html>

@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tables & QR – DineFlow</title>
+<link rel="stylesheet" href="css/auth.css">
+</head><body>
+<div class="top"><a class="logo" href="dashboard.html">Dine<span>Flow</span></a><button class="btn ghost" id="out">Log out</button></div>
+<div class="nav" id="nav"></div>
+<div class="wrap">
+  <h2>Tables &amp; QR codes</h2>
+  <div class="panel noprint">
+    <form id="f" class="row" style="align-items:flex-end">
+      <div><label>Table name / number</label><input id="label" placeholder="5 or Window 2" required maxlength="20"></div>
+      <button class="btn sm" style="flex:0">Add table</button>
+    </form>
+    <div class="row" style="margin-top:14px">
+      <button class="btn sm ghost" id="bulk" style="flex:0">Quick add tables 1–10</button>
+      <button class="btn sm ghost" id="print" style="flex:0">Print all QR</button>
+    </div>
+    <div class="msg" id="msg"></div>
+  </div>
+  <div class="qrgrid" id="grid"></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+<script src="js/config.js"></script>
+<script src="js/admin.js"></script>
+<script>
+let R, tables = [];
+const base = location.href.replace(/[^/]*$/, '');
+const urlFor = t => `${base}order.html?r=${encodeURIComponent(R.slug)}&t=${t.id}`;
+
+async function load(){
+  const { data, error } = await dfClient.from('dining_tables').select('*').eq('restaurant_id', R.id);
+  if (error) { $('msg').textContent = error.message; $('msg').className = 'msg err'; return; }
+  tables = (data || []).sort((a,b) => a.label.localeCompare(b.label, undefined, { numeric: true }));
+  $('grid').innerHTML = tables.map(t => `
+    <div class="qrcard">
+      <h4>Table ${esc(t.label)}</h4>
+      <div class="qrbox" id="qr-${t.id}"></div>
+      <div style="font-size:12px;color:var(--muted);margin-top:6px">${t.status === 'occupied' ? '🟠 Occupied' : '🟢 Free'}</div>
+      <div class="acts noprint">
+        <button class="btn sm ghost" data-st="${t.id}">${t.status === 'occupied' ? 'Mark free' : 'Mark busy'}</button>
+        <button class="btn sm danger" data-del="${t.id}">Delete</button>
+      </div>
+    </div>`).join('') || '<p style="color:var(--muted)">No tables yet.</p>';
+  tables.forEach(t => new QRCode($('qr-' + t.id), { text: urlFor(t), width: 130, height: 130 }));
+}
+
+$('f').addEventListener('submit', async e => {
+  e.preventDefault();
+  const { error } = await dfClient.from('dining_tables').insert({ restaurant_id: R.id, label: $('label').value.trim() });
+  if (error) { $('msg').textContent = error.message.includes('duplicate') ? 'That table already exists.' : error.message; $('msg').className = 'msg err'; return; }
+  $('label').value = ''; $('msg').textContent = ''; load();
+});
+$('bulk').onclick = async () => {
+  const have = new Set(tables.map(t => t.label));
+  const rows = Array.from({ length: 10 }, (_, i) => String(i + 1)).filter(l => !have.has(l)).map(label => ({ restaurant_id: R.id, label }));
+  if (rows.length) await dfClient.from('dining_tables').insert(rows);
+  load();
+};
+$('print').onclick = () => window.print();
+
+document.addEventListener('click', async e => {
+  const t = e.target;
+  if (t.dataset.del && confirm('Delete this table?')) { await dfClient.from('dining_tables').delete().eq('id', t.dataset.del); load(); }
+  if (t.dataset.st) { const x = tables.find(a => a.id === t.dataset.st); await dfClient.from('dining_tables').update({ status: x.status === 'occupied' ? 'free' : 'occupied' }).eq('id', x.id); load(); }
+});
+
+adminInit('admin-tables.html').then(x => { if (x) { R = x.r; load(); } });
+</script>
+</body></html>
