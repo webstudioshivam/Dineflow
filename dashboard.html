@@ -27,6 +27,8 @@ async function init(){
   if (error) { $('app').innerHTML = '<p style="color:var(--err)">' + esc(error.message) + '</p>'; return; }
 
   if (!mem.length) {
+    const { data: isAdmin } = await dfClient.rpc('is_platform_admin');
+    if (isAdmin) { location.href = 'super-admin.html'; return; }
     await dfClient.rpc('claim_invites');
     ({ data: mem } = await dfClient.from('restaurant_members').select('role, restaurants(id, name, slug, plan_id)').eq('user_id', session.user.id).limit(1));
   }
@@ -55,6 +57,7 @@ async function init(){
     </div>
     <div class="panel"><b>Next:</b> Waiter view &amp; analytics <span class="soon">soon</span> · Online payments <span class="soon">soon</span></div>`;
   renderNav('dashboard.html', mem[0].role);
+  dfClient.rpc('is_platform_admin').then(({ data }) => { if (data) $('nav').insertAdjacentHTML('beforeend', '<a href="super-admin.html">Super Admin</a>'); });
   const cnt = async tb => (await dfClient.from(tb).select('id', { count: 'exact', head: true }).eq('restaurant_id', r.id)).count || 0;
   const [nt, nm] = await Promise.all([cnt('dining_tables'), cnt('menu_items')]);
   const st = document.querySelectorAll('.stat b'); st[2].textContent = nt; st[3].textContent = nm;
