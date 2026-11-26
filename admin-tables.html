@@ -40,6 +40,7 @@ async function load(){
       <h4>Table ${esc(t.label)}</h4>
       <div class="qrbox" id="qr-${t.id}"></div>
       <div style="font-size:12px;color:var(--muted);margin-top:6px">${t.status === 'occupied' ? '🟠 Occupied' : '🟢 Free'}</div>
+      <div class="acts noprint" style="margin-bottom:6px"><a class="btn sm" style="text-decoration:none;display:inline-block;text-align:center" href="${urlFor(t)}" target="_blank">Open menu</a></div>
       <div class="acts noprint">
         <button class="btn sm ghost" data-st="${t.id}">${t.status === 'occupied' ? 'Mark free' : 'Mark busy'}</button>
         <button class="btn sm danger" data-del="${t.id}">Delete</button>
