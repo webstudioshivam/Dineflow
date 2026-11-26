@@ -3,130 +3,384 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>DineFlow – Smart Restaurant Management System</title>
-<meta name="description" content="QR ordering, live kitchen dashboard, waiter calls and analytics. One platform for every restaurant.">
+<title>DineFlow – QR ordering and kitchen screen for restaurants</title>
+<meta name="description" content="Guests scan a QR, the kitchen sees the order live, and you get paid by UPI. Menu, tables, staff logins and sales reports in one app.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Instrument+Sans:wght@400..700&display=swap" rel="stylesheet">
 <style>
-  :root{--bg:#0f0f10;--card:#181819;--line:#2a2a2c;--text:#f5f5f4;--muted:#a1a1a6;--accent:#ff7a1a;--accent2:#ff9a4d}
+  :root{
+    --ink:#121110; --raise:#1c1a17; --line:#2f2b26;
+    --text:#f4efe8; --muted:#a59c90; --saffron:#ff7a1a; --saffron-d:#e8650a;
+    --ok:#5fd68a; --veg:#3fbf6b; --nonveg:#e5534b;
+    --display:"Bricolage Grotesque",ui-sans-serif,system-ui,sans-serif;
+    --body:"Instrument Sans",ui-sans-serif,system-ui,sans-serif;
+  }
   *{box-sizing:border-box;margin:0;padding:0}
   html{scroll-behavior:smooth}
-  body{background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;line-height:1.6}
+  body{background:var(--ink);color:var(--text);font:400 17px/1.6 var(--body);-webkit-font-smoothing:antialiased}
   a{color:inherit;text-decoration:none}
-  .wrap{max-width:1100px;margin:0 auto;padding:0 20px}
-  nav{position:sticky;top:0;z-index:10;background:rgba(15,15,16,.85);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
-  nav .wrap{display:flex;align-items:center;justify-content:space-between;height:64px}
-  .logo{font-weight:800;font-size:22px;letter-spacing:-.5px}
-  .logo span{color:var(--accent)}
-  .links{display:flex;gap:22px;align-items:center;font-size:15px;color:var(--muted)}
-  .btn{display:inline-block;background:var(--accent);color:#111;font-weight:700;padding:12px 22px;border-radius:10px;border:0;cursor:pointer;font-size:15px;transition:.2s}
-  .btn:hover{background:var(--accent2);transform:translateY(-1px)}
-  .btn.ghost{background:transparent;color:var(--text);border:1px solid var(--line)}
-  .btn.ghost:hover{border-color:var(--accent);color:var(--accent)}
-  .hero{padding:90px 0 70px;text-align:center;background:radial-gradient(600px 300px at 50% 0,rgba(255,122,26,.18),transparent)}
-  .pill{display:inline-block;border:1px solid var(--line);padding:6px 14px;border-radius:99px;font-size:13px;color:var(--muted);margin-bottom:22px}
-  h1{font-size:clamp(34px,6vw,64px);line-height:1.08;letter-spacing:-1.5px;font-weight:800}
-  h1 em{font-style:normal;color:var(--accent)}
-  .hero p{max-width:620px;margin:20px auto 32px;color:var(--muted);font-size:18px}
-  .cta{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
-  section{padding:70px 0}
-  h2{font-size:clamp(26px,4vw,38px);letter-spacing:-.8px;text-align:center}
-  .sub{text-align:center;color:var(--muted);margin:10px auto 40px;max-width:560px}
-  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px}
-  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:24px;transition:.2s}
-  .card:hover{border-color:var(--accent);transform:translateY(-3px)}
-  .ic{font-size:28px;margin-bottom:12px}
-  .card h3{font-size:18px;margin-bottom:6px}
-  .card p{color:var(--muted);font-size:15px}
-  .steps{counter-reset:s}
-  .step::before{counter-increment:s;content:counter(s);display:grid;place-items:center;width:36px;height:36px;border-radius:50%;background:var(--accent);color:#111;font-weight:800;margin-bottom:12px}
-  .price{position:relative}
-  .price.pop{border-color:var(--accent)}
-  .price .tag{position:absolute;top:-12px;right:16px;background:var(--accent);color:#111;font-size:12px;font-weight:700;padding:3px 10px;border-radius:99px}
-  .amt{font-size:38px;font-weight:800;margin:8px 0}
-  .amt small{font-size:15px;color:var(--muted);font-weight:500}
-  .price ul{list-style:none;margin:14px 0 20px;color:var(--muted);font-size:15px}
-  .price li{padding:4px 0}
-  .price li::before{content:"✓ ";color:var(--accent)}
-  .price .btn{width:100%;text-align:center}
-  .cta-box{background:linear-gradient(135deg,#1d1209,#181819);border:1px solid var(--accent);border-radius:20px;padding:50px 24px;text-align:center}
-  footer{border-top:1px solid var(--line);padding:30px 0;color:var(--muted);font-size:14px;text-align:center}
-  @media(max-width:640px){.links a.hide{display:none}.hero{padding:60px 0 40px}}
+  :focus-visible{outline:2px solid var(--saffron);outline-offset:3px;border-radius:6px}
+  .wrap{max-width:1160px;margin:0 auto;padding:0 22px}
+  h1,h2,h3{font-family:var(--display);font-weight:700;line-height:1.05;letter-spacing:-.025em}
+
+  /* nav */
+  nav{position:sticky;top:0;z-index:20;background:rgba(18,17,16,.88);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+  nav .wrap{display:flex;align-items:center;justify-content:space-between;height:66px}
+  .logo{font:800 24px var(--display);letter-spacing:-.04em}
+  .logo b{color:var(--saffron)}
+  .nl{display:flex;align-items:center;gap:26px;font-size:15px;color:var(--muted)}
+  .nl a:hover{color:var(--text)}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;background:var(--saffron);color:#1a1006;font:700 16px var(--body);padding:14px 24px;border-radius:12px;border:0;cursor:pointer;transition:background .2s,transform .2s}
+  .btn:hover{background:#ff8d3a;transform:translateY(-2px)}
+  .btn.sm{padding:10px 18px;font-size:15px}
+  .btn.line{background:transparent;color:var(--text);border:1px solid var(--line)}
+  .btn.line:hover{border-color:var(--saffron);color:var(--saffron);background:transparent}
+
+  /* hero */
+  .hero{padding:72px 0 90px;overflow:hidden}
+  .hero .wrap{display:grid;grid-template-columns:1.05fr .95fr;gap:56px;align-items:center}
+  .hero h1{font-size:clamp(40px,6.4vw,78px)}
+  .hero p.lead{font-size:19px;color:var(--muted);max-width:30em;margin:22px 0 32px}
+  .cta{display:flex;gap:12px;flex-wrap:wrap}
+  .fine{margin-top:18px;font-size:14px;color:var(--muted)}
+
+  /* demo stage */
+  .stage{position:relative;min-height:560px;display:flex;justify-content:center;perspective:1300px}
+  .tilt{position:absolute;inset:0;display:flex;justify-content:center;transform-style:preserve-3d;transform:rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg));will-change:transform}
+  .phone::after{content:"";position:absolute;inset:0;border-radius:42px;pointer-events:none;background:linear-gradient(115deg,rgba(255,255,255,.10),transparent 38%);transform:translateZ(1px)}
+  .phone{width:288px;height:560px;background:#0b0a09;border:1px solid #3a342d;border-radius:42px;padding:12px;box-shadow:0 30px 80px rgba(0,0,0,.55);position:relative;z-index:2}
+  .screen{height:100%;background:var(--ink);border-radius:32px;overflow:hidden;position:relative;display:flex;flex-direction:column}
+  .sh{padding:22px 18px 12px;border-bottom:1px solid var(--line)}
+  .sh b{font:700 18px var(--display);display:block}
+  .sh span{font-size:12px;color:var(--muted)}
+  .dish{display:flex;gap:11px;padding:13px 18px;border-bottom:1px solid var(--line);align-items:center}
+  .ph{width:50px;height:50px;border-radius:12px;flex:none;background:linear-gradient(135deg,#3a2a1c,#241a12);display:grid;place-items:center;font-size:22px}
+  .dish .t{flex:1;min-width:0}
+  .dish h4{font:600 14px var(--body);display:flex;align-items:center;gap:6px}
+  .dish small{color:var(--muted);font-size:12px}
+  .vd{width:9px;height:9px;border-radius:2px;border:2px solid var(--veg);background:var(--veg);flex:none}
+  .vd.nv{border-color:var(--nonveg);background:var(--nonveg)}
+  .add{min-width:58px;height:30px;border-radius:8px;border:1px solid var(--saffron);color:var(--saffron);font:700 12px var(--body);display:grid;place-items:center;background:transparent;transition:all .25s}
+  .add.on{background:var(--saffron);color:#1a1006}
+  .add.pop{animation:pop .35s ease}
+  @keyframes pop{50%{transform:scale(1.18)}}
+  .cartbar{position:absolute;left:12px;right:12px;bottom:12px;background:var(--saffron);color:#1a1006;border-radius:14px;padding:13px 16px;display:flex;justify-content:space-between;font:700 14px var(--body);transform:translateY(130%);transition:transform .45s cubic-bezier(.2,.9,.3,1)}
+  .cartbar.show{transform:none}
+  .track{position:absolute;inset:0;background:var(--ink);padding:70px 22px 22px;opacity:0;pointer-events:none;transition:opacity .4s}
+  .track.show{opacity:1}
+  .track h4{font:700 22px var(--display);margin-bottom:4px}
+  .track p{color:var(--muted);font-size:13px;margin-bottom:26px}
+  .stp{display:flex;align-items:center;gap:12px;padding:11px 0;color:var(--muted);font-size:15px;transition:color .3s}
+  .stp i{width:28px;height:28px;border-radius:50%;background:var(--line);display:grid;place-items:center;font-style:normal;font-size:13px;transition:all .3s}
+  .stp.on{color:var(--text)}
+  .stp.on i{background:var(--saffron);color:#1a1006;font-weight:800}
+  .stp.cur i{box-shadow:0 0 0 6px rgba(255,122,26,.22)}
+
+  .ticket{position:absolute;right:-6px;top:150px;width:250px;background:var(--raise);border:1px solid var(--line);border-radius:16px;padding:16px;z-index:3;opacity:0;transform:translateX(40px) translateZ(70px) rotate(2deg);transition:all .5s cubic-bezier(.2,.9,.3,1);box-shadow:0 20px 50px rgba(0,0,0,.5)}
+  .ticket.show{opacity:1;transform:translateX(0) translateZ(70px) rotate(2deg)}
+  .ticket .top{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+  .ticket .top b{font:700 17px var(--display)}
+  .tag{font:700 11px var(--body);padding:3px 10px;border-radius:99px;background:rgba(255,122,26,.16);color:var(--saffron);transition:all .3s}
+  .tag.prep{background:rgba(255,210,77,.16);color:#ffd24d}
+  .tag.ready{background:rgba(95,214,138,.16);color:var(--ok)}
+  .ticket li{list-style:none;font-size:14px;padding:2px 0}
+  .ticket li b{color:var(--saffron)}
+  .ticket .ft{margin-top:10px;padding-top:10px;border-top:1px solid var(--line);font-size:12px;color:var(--muted);display:flex;justify-content:space-between}
+  .stagelabel{position:absolute;left:0;bottom:-4px;font-size:12px;color:var(--muted)}
+
+  /* sections */
+  section{padding:84px 0}
+  .head{max-width:640px;margin-bottom:40px}
+  .head h2{font-size:clamp(30px,4.4vw,48px)}
+  .head p{color:var(--muted);margin-top:14px}
+
+  /* roles tabs */
+  .tabs{display:flex;gap:8px;margin-bottom:22px;flex-wrap:wrap}
+  .tab{font:600 15px var(--body);background:transparent;color:var(--muted);border:1px solid var(--line);padding:10px 20px;border-radius:99px;cursor:pointer;transition:all .2s}
+  .tab[aria-selected="true"]{background:var(--text);color:var(--ink);border-color:var(--text)}
+  .panel{display:none;grid-template-columns:1fr 1fr;gap:40px;align-items:center;background:var(--raise);border:1px solid var(--line);border-radius:24px;padding:36px}
+  .panel.on{display:grid;animation:swap .35s ease}
+  @keyframes swap{from{opacity:0;transform:translateY(8px)}}
+  .panel h3{font-size:30px;margin-bottom:12px}
+  .panel ul{list-style:none;margin-top:16px}
+  .panel li{padding:9px 0;border-top:1px solid var(--line);color:var(--muted);font-size:16px}
+  .panel li b{color:var(--text);font-weight:600}
+  .mock{background:var(--ink);border:1px solid var(--line);border-radius:18px;padding:18px;min-height:230px}
+  .cols{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;font-size:12px;color:var(--muted)}
+  .cols div.c{background:var(--raise);border:1px solid var(--line);border-radius:10px;padding:10px;color:var(--text);margin-top:8px;font-size:13px}
+  .cols div.c.o{border-color:var(--saffron)}
+  .bars{display:flex;align-items:flex-end;gap:7px;height:120px;margin-top:14px}
+  .bars i{flex:1;background:var(--saffron);border-radius:5px 5px 0 0;opacity:.85}
+  .kpis{display:flex;gap:22px}
+  .kpis b{display:block;font:700 26px var(--display)}
+  .kpis span{font-size:12px;color:var(--muted)}
+  .qr{width:96px;height:96px;background:#fff;border-radius:10px;padding:8px;display:grid;grid-template-columns:repeat(9,1fr);gap:1px}
+  .qr i{background:#111}.qr i.w{background:#fff}
+
+  /* features list */
+  .fl{display:grid;grid-template-columns:1fr 1fr;gap:0 56px}
+  .fl div{padding:22px 0;border-top:1px solid var(--line)}
+  .fl h3{font-size:21px;margin-bottom:6px;letter-spacing:-.015em}
+  .fl p{color:var(--muted);font-size:16px}
+
+  /* pricing */
+  .plans{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;align-items:stretch}
+  .plan{background:var(--raise);border:1px solid var(--line);border-radius:20px;padding:28px;display:flex;flex-direction:column}
+  .plan.best{border-color:var(--saffron);box-shadow:0 0 0 1px var(--saffron),0 20px 60px rgba(255,122,26,.12)}
+  .plan h3{font-size:22px}
+  .plan .for{color:var(--muted);font-size:14px;margin-top:4px;min-height:42px}
+  .amt{font:700 46px var(--display);letter-spacing:-.03em;margin:14px 0 4px}
+  .amt small{font:500 15px var(--body);color:var(--muted);letter-spacing:0}
+  .plan ul{list-style:none;margin:18px 0 24px;flex:1}
+  .plan li{padding:8px 0;border-top:1px solid var(--line);font-size:15px;display:flex;gap:10px}
+  .plan li::before{content:"✓";color:var(--saffron);font-weight:700}
+  .plan .btn{width:100%}
+  .note{color:var(--muted);font-size:14px;margin-top:18px}
+
+  /* faq */
+  .faq{max-width:760px}
+  details{border-top:1px solid var(--line);padding:20px 0}
+  details:last-child{border-bottom:1px solid var(--line)}
+  summary{cursor:pointer;font:600 18px var(--body);list-style:none;display:flex;justify-content:space-between;gap:16px}
+  summary::-webkit-details-marker{display:none}
+  summary::after{content:"+";color:var(--saffron);font-size:24px;line-height:1;transition:transform .25s}
+  details[open] summary::after{transform:rotate(45deg)}
+  details p{color:var(--muted);margin-top:12px;max-width:40em}
+
+  /* closing band */
+  .band{background:var(--saffron);color:#1a1006;border-radius:28px;padding:56px 36px;text-align:center}
+  .band h2{font-size:clamp(30px,5vw,54px);max-width:14em;margin:0 auto}
+  .band p{margin:14px auto 28px;max-width:32em;color:#4a2a0c}
+  .band .btn{background:#1a1006;color:var(--text)}
+  .band .btn:hover{background:#000}
+  .band .btn.line{background:transparent;color:#1a1006;border-color:#1a1006}
+  footer{padding:36px 0 50px;color:var(--muted);font-size:14px;border-top:1px solid var(--line);margin-top:84px}
+  footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
+
+  @media(max-width:920px){
+    .hero .wrap{grid-template-columns:1fr;gap:36px}
+    .stage{min-height:0;flex-direction:column;align-items:center;gap:16px}
+    .tilt{position:relative;inset:auto;flex-direction:column;align-items:center;gap:16px}
+    .ticket{position:relative;right:auto;top:auto;transform:translateY(16px) translateZ(40px);width:288px}
+    .ticket.show{transform:translateZ(40px)}
+    .stagelabel{display:none}
+    .panel,.fl,.plans{grid-template-columns:1fr}
+    .panel{padding:24px}
+    .nl a.hide{display:none}
+  }
+  @media(prefers-reduced-motion:reduce){
+    *{animation:none!important;transition:none!important}
+    html{scroll-behavior:auto}
+  }
 </style>
 <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#0f0f10">
-<link rel="apple-touch-icon" href="icons/icon-123.png">
+<meta name="theme-color" content="#121110">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
 </head>
 <body>
 
 <nav><div class="wrap">
-  <a href="#" class="logo">Dine<span>Flow</span></a>
-  <div class="links">
-    <a href="#features" class="hide">Features</a>
-    <a href="#how" class="hide">How it works</a>
+  <a href="#top" class="logo">Dine<b>Flow</b></a>
+  <div class="nl">
+    <a href="#roles" class="hide">How it works</a>
     <a href="#pricing" class="hide">Pricing</a>
-    <a href="login.html">Login</a>
-    <a href="register.html" class="btn">Get started</a>
+    <a href="#faq" class="hide">Questions</a>
+    <a href="login.html">Log in</a>
+    <a href="register.html" class="btn sm">Register</a>
   </div>
 </div></nav>
 
-<header class="hero"><div class="wrap">
-  <span class="pill">🍽️ Smart Restaurant Management System</span>
-  <h1>One Platform.<br><em>Every Restaurant.</em></h1>
-  <p>QR menu, table ordering, live kitchen dashboard, waiter calls and sales analytics. Set up in minutes, no hardware needed.</p>
-  <div class="cta">
-    <a href="register.html" class="btn">Start your restaurant</a>
-    <a href="#features" class="btn ghost">See features</a>
+<header class="hero" id="top"><div class="wrap">
+  <div>
+    <h1>Guests scan. The kitchen sees it. You get paid.</h1>
+    <p class="lead">QR ordering, a live kitchen screen, waiter calls and sales reports for your restaurant. No hardware, and guests don't install anything.</p>
+    <div class="cta">
+      <a href="register.html" class="btn">Register your restaurant</a>
+      <a href="https://wa.me/917897383084?text=Hi%2C%20I%20want%20DineFlow%20for%20my%20restaurant" class="btn line">Talk on WhatsApp</a>
+    </div>
+    <p class="fine">Plans from ₹499 a month. Payments go straight to your UPI.</p>
+  </div>
+
+  <div class="stage" aria-label="Animated example of an order going from a guest's phone to the kitchen screen">
+    <div class="tilt" id="tilt">
+    <div class="phone"><div class="screen">
+      <div class="sh"><b>Royal Palace</b><span>Table 5</span></div>
+      <div class="dish"><div class="ph">🧆</div><div class="t"><h4><span class="vd"></span>Paneer Tikka</h4><small>₹260</small></div><div class="add" id="a1">ADD</div></div>
+      <div class="dish"><div class="ph">🫓</div><div class="t"><h4><span class="vd"></span>Butter Naan</h4><small>₹60</small></div><div class="add" id="a2">ADD</div></div>
+      <div class="dish"><div class="ph">🍗</div><div class="t"><h4><span class="vd nv"></span>Chicken Biryani</h4><small>₹320</small></div><div class="add">ADD</div></div>
+      <div class="dish"><div class="ph">☕</div><div class="t"><h4><span class="vd"></span>Masala Chai</h4><small>₹40</small></div><div class="add">ADD</div></div>
+      <div class="cartbar" id="bar"><span>3 items</span><span>Place order · ₹380</span></div>
+      <div class="track" id="trk">
+        <h4>Order placed</h4><p>Table 5 · ₹380</p>
+        <div class="stp" id="s1"><i>✓</i>Received</div>
+        <div class="stp" id="s2"><i>2</i>Preparing</div>
+        <div class="stp" id="s3"><i>3</i>Ready</div>
+      </div>
+    </div></div>
+
+    <div class="ticket" id="tk" aria-hidden="true">
+      <div class="top"><b>Table 5</b><span class="tag" id="tg">NEW</span></div>
+      <ul><li><b>1×</b> Paneer Tikka</li><li><b>2×</b> Butter Naan</li></ul>
+      <div class="ft"><span>Kitchen screen</span><span>just now</span></div>
+    </div>
+    </div>
   </div>
 </div></header>
 
-<section id="features"><div class="wrap">
-  <h2>Everything your restaurant needs</h2>
-  <p class="sub">From the guest's table to the kitchen to the owner's dashboard.</p>
-  <div class="grid">
-    <div class="card"><div class="ic">📱</div><h3>Table QR Ordering</h3><p>Guests scan, browse the menu with photos and allergy info, and order from their seat.</p></div>
-    <div class="card"><div class="ic">👨‍🍳</div><h3>Live Kitchen Display</h3><p>Orders appear instantly. Move them from Pending to Preparing to Ready.</p></div>
-    <div class="card"><div class="ic">🔔</div><h3>Waiter Calls</h3><p>Water, napkins or help. Staff see the table number the moment a guest taps.</p></div>
-    <div class="card"><div class="ic">🪑</div><h3>Table Management</h3><p>See which tables are free or occupied and monitor every order in one place.</p></div>
-    <div class="card"><div class="ic">📊</div><h3>Sales Analytics</h3><p>Daily, weekly and monthly revenue, plus your most popular dishes.</p></div>
-    <div class="card"><div class="ic">💳</div><h3>Payments &amp; Receipts</h3><p>UPI, card or cash, with digital receipts and customer feedback.</p></div>
+<section id="roles"><div class="wrap">
+  <div class="head"><h2>One order, three screens</h2><p>Each person sees only what they need.</p></div>
+  <div class="tabs" role="tablist">
+    <button class="tab" role="tab" aria-selected="true" data-t="g">Guest</button>
+    <button class="tab" role="tab" aria-selected="false" data-t="k">Kitchen</button>
+    <button class="tab" role="tab" aria-selected="false" data-t="o">Owner</button>
   </div>
-</div></section>
 
-<section id="how"><div class="wrap">
-  <h2>Live in 3 steps</h2>
-  <p class="sub">No installs. Works in any browser.</p>
-  <div class="grid steps">
-    <div class="card step"><h3>Register</h3><p>Create your account and your restaurant page at dineflow.in/your-name.</p></div>
-    <div class="card step"><h3>Add menu &amp; tables</h3><p>Upload dishes, set prices and print a QR code for each table.</p></div>
-    <div class="card step"><h3>Start taking orders</h3><p>Guests scan and order. Your kitchen sees it live.</p></div>
+  <div class="panel on" id="p-g">
+    <div><h3>Scan, choose, order</h3><p style="color:var(--muted)">Every table gets its own QR code. The menu opens in the phone's browser.</p>
+      <ul><li><b>Photos, prices and allergens</b> on every dish</li><li><b>Veg-only filter</b> and categories</li><li><b>Live order status</b> and a button to call the waiter</li><li><b>Pay by UPI</b> from the same screen</li></ul></div>
+    <div class="mock" style="display:flex;gap:20px;align-items:center;justify-content:center">
+      <div class="qr" aria-hidden="true"></div>
+      <div><b style="font:700 18px var(--display)">Table 5</b><p style="color:var(--muted);font-size:14px;margin-top:4px">Scan to see the menu<br>and order</p></div>
+    </div>
   </div>
-</div></section>
 
-<section id="pricing"><div class="wrap">
-  <h2>Simple pricing</h2>
-  <p class="sub">Introductory prices. Cancel anytime.</p>
-  <div class="grid">
-    <div class="card price"><h3>Starter</h3><div class="amt">₹499<small>/month</small></div>
-      <ul><li>QR menu &amp; ordering</li><li>Kitchen dashboard</li><li>Up to 10 tables</li></ul>
-      <a href="register.html" class="btn ghost">Choose Starter</a></div>
-    <div class="card price pop"><span class="tag">Popular</span><h3>Professional</h3><div class="amt">₹999<small>/month</small></div>
-      <ul><li>Everything in Starter</li><li>Up to 50 tables</li><li>Waiter calls &amp; analytics</li></ul>
-      <a href="register.html" class="btn">Choose Professional</a></div>
-    <div class="card price"><h3>Premium</h3><div class="amt">₹1,999<small>/month</small></div>
-      <ul><li>Everything in Professional</li><li>Custom domain</li><li>Priority support</li></ul>
-      <a href="register.html" class="btn ghost">Choose Premium</a></div>
+  <div class="panel" id="p-k">
+    <div><h3>Orders appear the moment they're placed</h3><p style="color:var(--muted)">A live board with a beep for every new order.</p>
+      <ul><li><b>New, Preparing, Ready</b> in one tap each</li><li><b>Table number and notes</b> on every ticket</li><li><b>Waiter calls</b> show up on the same screen</li><li><b>Mark paid</b> as cash or UPI</li></ul></div>
+    <div class="mock"><div class="cols">
+      <div>New<div class="c o"><b>Table 2</b><br>2× Dal Makhani</div></div>
+      <div>Preparing<div class="c"><b>Table 5</b><br>Paneer Tikka</div></div>
+      <div>Ready<div class="c"><b>Table 1</b><br>Masala Chai</div></div>
+    </div></div>
+  </div>
+
+  <div class="panel" id="p-o">
+    <div><h3>Know how the day went</h3><p style="color:var(--muted)">Sales, busy hours and your most ordered dishes.</p>
+      <ul><li><b>Today, 7 days or 30 days</b> at a glance</li><li><b>Edit the menu</b> and hide sold-out dishes</li><li><b>Staff logins</b> for kitchen, waiter and manager</li><li><b>One UPI ID</b> for all customer payments</li></ul></div>
+    <div class="mock"><div class="kpis"><div><b>₹18,420</b><span>Sales this week</span></div><div><b>96</b><span>Orders</span></div></div>
+      <div class="bars" aria-hidden="true"><i style="height:38%"></i><i style="height:52%"></i><i style="height:44%"></i><i style="height:70%"></i><i style="height:62%"></i><i style="height:100%"></i><i style="height:84%"></i></div></div>
   </div>
 </div></section>
 
 <section><div class="wrap">
-  <div class="cta-box">
-    <h2>Ready to modernise your restaurant?</h2>
-    <p class="sub">Create your DineFlow account today.</p>
-    <a href="register.html" class="btn">Get started free</a>
+  <div class="head"><h2>What's included</h2></div>
+  <div class="fl">
+    <div><h3>Table QR codes</h3><p>Add your tables, print the QR codes, and stick one on each table.</p></div>
+    <div><h3>Menu manager</h3><p>Categories, veg or non-veg, allergens, photos. Hide a dish when it runs out.</p></div>
+    <div><h3>Waiter calls</h3><p>Guests ask for water, napkins or help. Staff see the table number.</p></div>
+    <div><h3>Staff logins</h3><p>Invite kitchen, waiter and manager by email. Each role sees only their screens.</p></div>
+    <div><h3>UPI payments</h3><p>Guests pay your UPI ID straight from their phone. We take no cut.</p></div>
+    <div><h3>Install as an app</h3><p>Add DineFlow to the phone's home screen. It opens full screen like an app.</p></div>
   </div>
 </div></section>
 
-<footer><div class="wrap">© <span id="y"></span> DineFlow. One Platform. Every Restaurant.</div></footer>
-<script>document.getElementById('y').textContent=new Date().getFullYear()</script>
+<section id="pricing"><div class="wrap">
+  <div class="head"><h2>Pricing</h2><p>Per restaurant, per month. Pay by UPI or bank transfer.</p></div>
+  <div class="plans">
+    <div class="plan"><h3>Starter</h3><p class="for">For a small cafe getting started.</p><div class="amt">₹499<small> /month</small></div>
+      <ul><li>QR menu and ordering</li><li>Kitchen screen</li><li>Up to 10 tables</li></ul>
+      <a href="register.html" class="btn line">Choose Starter</a></div>
+    <div class="plan best"><h3>Professional</h3><p class="for">For a restaurant with a kitchen and floor staff.</p><div class="amt">₹999<small> /month</small></div>
+      <ul><li>Everything in Starter</li><li>Unlimited tables</li><li>Waiter calls and sales reports</li><li>Staff logins</li></ul>
+      <a href="register.html" class="btn">Choose Professional</a></div>
+    <div class="plan"><h3>Premium</h3><p class="for">For a brand that wants its own web address.</p><div class="amt">₹1,999<small> /month</small></div>
+      <ul><li>Everything in Professional</li><li>Your own domain, like menu.yourrestaurant.com</li><li>Priority support</li></ul>
+      <a href="register.html" class="btn line">Choose Premium</a></div>
+  </div>
+  <p class="note">Launch prices. Your restaurant goes live once your first payment is confirmed.</p>
+</div></section>
+
+<section id="faq"><div class="wrap">
+  <div class="head"><h2>Questions</h2></div>
+  <div class="faq">
+    <details><summary>Do guests need to install an app?</summary><p>No. They scan the QR code with the phone camera and the menu opens in the browser.</p></details>
+    <details><summary>How do I get paid?</summary><p>Guests pay your UPI ID directly from their phone. Your staff then mark the order as paid on the kitchen screen. DineFlow doesn't touch the money.</p></details>
+    <details><summary>Can my staff have their own logins?</summary><p>Yes. Invite kitchen, waiter and manager staff by email. A cook sees only the kitchen screen.</p></details>
+    <details><summary>Is my data separate from other restaurants?</summary><p>Yes. Each restaurant's menu, orders and sales are private to that restaurant.</p></details>
+    <details><summary>What happens if I stop paying?</summary><p>Guests can no longer place new orders. Renew and your restaurant goes live again with everything as you left it.</p></details>
+    <details><summary>Do I need a computer?</summary><p>No. Everything works on a phone. A tablet in the kitchen works well for the order screen.</p></details>
+  </div>
+</div></section>
+
+<section style="padding-top:0"><div class="wrap">
+  <div class="band">
+    <h2>Put DineFlow on your tables this week</h2>
+    <p>Register, add your menu, print the QR codes. We'll switch your restaurant on after your first payment.</p>
+    <div class="cta" style="justify-content:center">
+      <a href="register.html" class="btn">Register your restaurant</a>
+      <a href="https://wa.me/917897383084?text=Hi%2C%20I%20want%20DineFlow%20for%20my%20restaurant" class="btn line">Talk on WhatsApp</a>
+    </div>
+  </div>
+</div></section>
+
+<footer><div class="wrap"><span>© <span id="y"></span> DineFlow. One platform, every restaurant.</span><span>WhatsApp +91 7897383084</span></div></footer>
+
+<script>
+document.getElementById('y').textContent = new Date().getFullYear();
+
+/* QR-looking pattern for the guest mock (decorative) */
+(function(){
+  const q = document.querySelector('.qr'); if(!q) return;
+  const m = '111111101000101111111100000101101101000001101110101011001011101101110101100101011101101110100110101011101100000101010110101000001111111010101010101111111000000001101100000000101101110011110101100101101001001010011001010011101010111101';
+  for(let i=0;i<81;i++){const c=document.createElement('i'); if(m[i%m.length]==='0') c.className='w'; q.appendChild(c);}
+})();
+
+/* role tabs */
+document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => {
+  document.querySelectorAll('.tab').forEach(x => x.setAttribute('aria-selected', x === b));
+  document.querySelectorAll('.panel').forEach(p => p.classList.toggle('on', p.id === 'p-' + b.dataset.t));
+}));
+
+/* 3D tilt: the phone follows the pointer; idle sway keeps it alive on touch screens */
+(function(){
+  const el = document.getElementById('tilt'); if (!el || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  let tx = 0, ty = 0, cx = 0, cy = 0, hover = false, visible = true, t0 = performance.now();
+  const hero = document.querySelector('.hero');
+  hero.addEventListener('pointermove', e => { const r = hero.getBoundingClientRect(); hover = true;
+    ty = ((e.clientX - r.left) / r.width - .5) * 22; tx = -((e.clientY - r.top) / r.height - .5) * 14; });
+  hero.addEventListener('pointerleave', () => hover = false);
+  new IntersectionObserver(([e]) => { visible = e.isIntersecting; if (visible) requestAnimationFrame(loop); }).observe(hero);
+  function loop(now){
+    if (!visible) return;
+    if (!hover) { const t = (now - t0) / 1000; ty = Math.sin(t * .7) * 9; tx = Math.cos(t * .5) * 4; }
+    cx += (tx - cx) * .08; cy += (ty - cy) * .08;
+    el.style.setProperty('--rx', cx.toFixed(2) + 'deg'); el.style.setProperty('--ry', cy.toFixed(2) + 'deg');
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+})();
+
+/* hero demo: one order travels from the guest's phone to the kitchen ticket, then loops */
+(function(){
+  const $ = id => document.getElementById(id);
+  const a1=$('a1'), a2=$('a2'), bar=$('bar'), trk=$('trk'), tk=$('tk'), tg=$('tg'), s=[$('s1'),$('s2'),$('s3')];
+  const step = n => s.forEach((el,i) => { el.classList.toggle('on', i<=n); el.classList.toggle('cur', i===n); });
+  const add = (el,t) => { el.textContent=t; el.classList.add('on','pop'); setTimeout(()=>el.classList.remove('pop'),400); };
+  function reset(){
+    [a1,a2].forEach(e=>{e.textContent='ADD';e.classList.remove('on','pop')});
+    bar.classList.remove('show'); trk.classList.remove('show'); tk.classList.remove('show');
+    tg.textContent='NEW'; tg.className='tag'; s.forEach(e=>e.classList.remove('on','cur'));
+  }
+  function finalState(){
+    add(a1,'1'); add(a2,'2'); trk.classList.add('show'); tk.classList.add('show'); tg.textContent='READY'; tg.className='tag ready'; step(2);
+  }
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) { finalState(); return; }
+  const T = [
+    [700,  () => add(a1,'1')],
+    [1500, () => add(a2,'2')],
+    [2300, () => bar.classList.add('show')],
+    [3500, () => { trk.classList.add('show'); step(0); }],
+    [4000, () => tk.classList.add('show')],
+    [5600, () => { tg.textContent='PREPARING'; tg.className='tag prep'; step(1); }],
+    [7400, () => { tg.textContent='READY'; tg.className='tag ready'; step(2); }],
+    [10000,() => reset()]
+  ];
+  let timers = [];
+  function run(){ reset(); timers = T.map(([t,f]) => setTimeout(f,t)); setTimeout(run, 10600); }
+  run();
+})();
+</script>
 <script>if('serviceWorker' in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));</script>
 </body>
 </html>

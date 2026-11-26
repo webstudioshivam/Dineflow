@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Reset password – DineFlow</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600..800&family=Instrument+Sans:wght@400..700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/entry.css">
+<link rel="manifest" href="manifest.json"><meta name="theme-color" content="#121110"><link rel="apple-touch-icon" href="icons/icon-192.png">
+</head><body>
+<div class="split">
+  <aside class="brand">
+    <a href="index.html" class="logo">Dine<b>Flow</b></a>
+    <div><h2>Back to running your restaurant.</h2>
+      <ul><li><b>Guests order from the table</b> by scanning a QR code</li><li><b>The kitchen sees orders live</b> with a beep for each new one</li><li><b>You see sales</b> for today, this week and this month</li></ul></div>
+    <small>One platform. Every restaurant.</small>
+  </aside>
+  <main class="side"><div class="box">
+    <a href="index.html" class="mlogo">Dine<b>Flow</b></a>
+    <h1>Set a new password</h1>
+    <p class="sub" id="sub">Open this page from the link in your reset email.</p>
+    <form id="f" hidden>
+      <label for="pw">New password</label>
+      <div class="pw"><input id="pw" type="password" required minlength="8" autocomplete="new-password" placeholder="At least 8 characters"><button type="button">Show</button></div>
+      <button class="btn" id="btn">Save password</button>
+    </form>
+    <div class="msg" id="msg" role="alert"></div>
+    <p class="alt"><a href="login.html">Back to log in</a></p>
+  </div></main>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/config.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+function say(t, c){ $('msg').textContent = t; $('msg').className = 'msg ' + (c || ''); }
+function busy(on){ $('btn').disabled = on; $('btn').classList.toggle('loading', on); }
+document.querySelectorAll('.pw button').forEach(b => b.addEventListener('click', () => {
+  const i = b.parentElement.querySelector('input'); const show = i.type === 'password';
+  i.type = show ? 'text' : 'password'; b.textContent = show ? 'Hide' : 'Show';
+}));
+dfClient.auth.onAuthStateChange((ev) => { if (ev === 'PASSWORD_RECOVERY') { $('f').hidden = false; $('sub').textContent = 'Choose a new password for your account.'; } });
+$('f').addEventListener('submit', async e => {
+  e.preventDefault(); busy(true); say('');
+  const { error } = await dfClient.auth.updateUser({ password: $('pw').value });
+  if (error) { say(error.message, 'err'); busy(false); return; }
+  say('Password updated. Taking you to your dashboard…', 'ok'); setTimeout(() => location.href = 'dashboard.html', 1200);
+});
+</script>
+<script>if('serviceWorker' in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));</script>
+</body></html>

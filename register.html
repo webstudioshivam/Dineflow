@@ -2,51 +2,66 @@
 <html lang="en"><head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Register – DineFlow</title>
-<link rel="stylesheet" href="css/auth.css">
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#0f0f10">
-<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600..800&family=Instrument+Sans:wght@400..700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/entry.css">
+<link rel="manifest" href="manifest.json"><meta name="theme-color" content="#121110"><link rel="apple-touch-icon" href="icons/icon-192.png">
 </head><body>
-<div class="center"><div class="box">
-  <a href="index.html" class="logo">Dine<span>Flow</span></a>
-  <h1>Create your restaurant</h1>
-  <p class="sub">Start managing orders in minutes</p>
-  <form id="f">
-    <label>Restaurant name</label>
-    <input id="rname" placeholder="Royal Palace" required maxlength="60">
-    <label>Your page address</label>
-    <input id="slug" placeholder="royal-palace" required minlength="3" maxlength="40" pattern="[a-z0-9\-]{3,40}">
-    <div class="hint">dineflow.in/<b id="preview">your-name</b></div>
-    <label>Email</label>
-    <input id="email" type="email" placeholder="you@example.com" required autocomplete="email">
-    <label>Password</label>
-    <input id="pw" type="password" placeholder="At least 8 characters" required minlength="8" autocomplete="new-password">
-    <button class="btn" id="btn">Create account</button>
-    <div class="msg" id="msg"></div>
-  </form>
-  <div class="alt">Already have an account? <a href="login.html">Log in</a></div>
-</div></div>
-
+<div class="split">
+  <aside class="brand">
+    <a href="index.html" class="logo">Dine<b>Flow</b></a>
+    <div><h2>Put your restaurant on DineFlow.</h2>
+      <ul><li><b>Guests order from the table</b> by scanning a QR code</li><li><b>The kitchen sees orders live</b> with a beep for each new one</li><li><b>You see sales</b> for today, this week and this month</li></ul></div>
+    <small>One platform. Every restaurant.</small>
+  </aside>
+  <main class="side"><div class="box">
+    <a href="index.html" class="mlogo">Dine<b>Flow</b></a>
+    <h1>Register your restaurant</h1>
+    <p class="sub">Your account is switched on after your first payment.</p>
+    <form id="f">
+      <label for="rname">Restaurant name</label>
+      <input id="rname" placeholder="Royal Palace" required maxlength="60">
+      <label for="slug">Page address</label>
+      <input id="slug" placeholder="royal-palace" required minlength="3" maxlength="40" pattern="[a-z0-9\-]{3,40}">
+      <div class="hint">Your menu page: dineflow.in/<b id="preview">your-name</b></div>
+      <label for="email">Email</label>
+      <input id="email" type="email" placeholder="you@restaurant.com" required autocomplete="email">
+      <label for="pw">Password</label>
+      <div class="pw"><input id="pw" type="password" placeholder="At least 8 characters" required minlength="8" autocomplete="new-password"><button type="button">Show</button></div>
+      <div class="meter" id="meter"><i></i><i></i><i></i><i></i></div>
+      <button class="btn" id="btn">Create account</button>
+      <div class="msg" id="msg" role="alert"></div>
+    </form>
+    <p class="alt">Already registered? <a href="login.html">Log in</a></p>
+  </div></main>
+</div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/config.js"></script>
 <script>
 const $ = id => document.getElementById(id);
+function say(t, c){ $('msg').textContent = t; $('msg').className = 'msg ' + (c || ''); }
+function busy(on){ $('btn').disabled = on; $('btn').classList.toggle('loading', on); }
+document.querySelectorAll('.pw button').forEach(b => b.addEventListener('click', () => {
+  const i = b.parentElement.querySelector('input'); const show = i.type === 'password';
+  i.type = show ? 'text' : 'password'; b.textContent = show ? 'Hide' : 'Show';
+}));
 const slugify = s => s.toLowerCase().trim().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,40);
 let slugEdited = false;
 $('rname').addEventListener('input', e => { if(!slugEdited){ $('slug').value = slugify(e.target.value); $('preview').textContent = $('slug').value || 'your-name'; }});
 $('slug').addEventListener('input', e => { slugEdited = true; e.target.value = slugify(e.target.value); $('preview').textContent = e.target.value || 'your-name'; });
-
-function say(t, cls){ $('msg').textContent = t; $('msg').className = 'msg ' + (cls||''); }
-
+$('pw').addEventListener('input', e => {
+  const v = e.target.value; let n = 0;
+  if (v.length >= 8) n++; if (/[A-Z]/.test(v) && /[a-z]/.test(v)) n++; if (/\d/.test(v)) n++; if (/[^A-Za-z0-9]/.test(v) || v.length >= 12) n++;
+  $('meter').className = 'meter' + (v ? ' s' + Math.max(n,1) : '');
+});
 $('f').addEventListener('submit', async e => {
-  e.preventDefault();
-  $('btn').disabled = true; say('Creating account…');
+  e.preventDefault(); busy(true); say('');
   const { data, error } = await dfClient.auth.signUp({ email: $('email').value.trim(), password: $('pw').value });
-  if (error) { say(error.message, 'err'); $('btn').disabled = false; return; }
+  if (error) { say(error.message, 'err'); busy(false); return; }
   // Restaurant is created on first dashboard load (works even if email confirmation is on)
   localStorage.setItem('df_pending', JSON.stringify({ name: $('rname').value.trim(), slug: $('slug').value }));
   if (data.session) { location.href = 'dashboard.html'; }
-  else { say('Check your email to confirm, then log in.', 'ok'); $('btn').disabled = false; }
+  else { say('Check your email to confirm your account, then log in.', 'ok'); busy(false); }
 });
 </script>
 <script>if('serviceWorker' in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));</script>
