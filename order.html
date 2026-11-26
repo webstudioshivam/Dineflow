@@ -66,7 +66,7 @@ let R, T, cats = [], items = [], cart = {}, vegOnly = false, activeCat = 'all', 
 
 async function init(){
   if (!slug) return fail('Invalid QR code.');
-  const { data: r } = await dfClient.from('restaurants').select('id,name,brand_color').eq('slug', slug).eq('is_active', true).maybeSingle();
+  const { data: r } = await dfClient.from('restaurants').select('id,name,brand_color,upi_id').eq('slug', slug).eq('is_active', true).maybeSingle();
   if (!r) return fail('Restaurant not found.');
   R = r; document.title = R.name + ' – Menu';
   if (R.brand_color && /^#[0-9a-fA-F]{6}$/.test(R.brand_color)) document.documentElement.style.setProperty('--accent', R.brand_color);
@@ -138,7 +138,8 @@ async function track(){
       <div class="wrap">
       ${o.status === 'cancelled' ? '<div class="card">This order was cancelled. Please ask the staff.</div>' : `
       <div class="steps">${STEPS.map((s,i) => `<div class="st ${i<=idx?'on':''}"><i>${s[2]}</i>${s[1]}</div>`).join('')}</div>`}
-      <div class="card"><b>Total: ₹${Number(o.total).toFixed(2)}</b><div style="color:var(--muted);font-size:14px;margin-top:4px">${o.payment_status === 'paid' ? '✅ Paid' : 'Payment pending, please pay at the counter.'}</div></div>
+      <div class="card"><b>Total: ₹${Number(o.total).toFixed(2)}</b><div style="color:var(--muted);font-size:14px;margin-top:4px">${o.payment_status === 'paid' ? '✅ Paid' : (R.upi_id ? 'Pay online, or at the counter.' : 'Payment pending, please pay at the counter.')}</div>
+        ${o.payment_status !== 'paid' && R.upi_id && o.status !== 'cancelled' ? `<a class="btn plain" style="margin-top:12px;text-decoration:none" href="${esc('upi://pay?pa=' + encodeURIComponent(R.upi_id) + '&pn=' + encodeURIComponent(R.name) + '&am=' + Number(o.total).toFixed(2) + '&cu=INR&tn=' + encodeURIComponent('Order ' + (T ? 'Table ' + T.label : '')))}">Pay ₹${Number(o.total).toFixed(2)} with UPI</a><div style="font-size:12px;color:var(--muted);margin-top:8px">After paying, staff will confirm your payment.</div>` : ''}</div>
       <div class="card"><b>Need something?</b><div class="help">
         <button data-call="water">💧 Water</button><button data-call="napkin">🧻 Napkins</button><button data-call="assistance">🙋 Waiter</button></div>
         <div class="msg" id="cmsg"></div></div>

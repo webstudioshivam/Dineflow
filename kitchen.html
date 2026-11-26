@@ -65,7 +65,7 @@ function card(o, fresh){
     ${o.note ? `<div class="note">📝 ${esc(o.note)}</div>` : ''}
     <div class="acts">
       <button class="btn sm" data-id="${o.id}" data-to="${next[0]}">${next[1]}</button>
-      ${o.status === 'ready' && o.payment_status !== 'paid' ? `<button class="btn sm ghost" data-paid="${o.id}">Mark paid (cash)</button>` : ''}
+      ${o.payment_status !== 'paid' ? `<button class="btn sm ghost" data-paid="${o.id}" data-method="cash">Paid · Cash</button><button class="btn sm ghost" data-paid="${o.id}" data-method="upi">Paid · UPI</button>` : ''}
       ${o.payment_status === 'paid' ? '<span class="tag">Paid</span>' : ''}
       ${o.status === 'pending' ? `<button class="btn sm danger" data-id="${o.id}" data-to="cancelled">Cancel</button>` : ''}
     </div></div>`;
@@ -97,7 +97,7 @@ async function load(){
 document.addEventListener('click', async e => {
   const b = e.target.closest('button'); if (!b) return;
   if (b.dataset.to) { b.disabled = true; await dfClient.from('orders').update({ status: b.dataset.to }).eq('id', b.dataset.id); load(); }
-  if (b.dataset.paid) { b.disabled = true; await dfClient.from('orders').update({ payment_status: 'paid', payment_method: 'cash' }).eq('id', b.dataset.paid); load(); }
+  if (b.dataset.paid) { b.disabled = true; await dfClient.from('orders').update({ payment_status: 'paid', payment_method: b.dataset.method }).eq('id', b.dataset.paid); load(); }
   if (b.dataset.call) { b.disabled = true; await dfClient.from('waiter_calls').update({ is_resolved: true }).eq('id', b.dataset.call); load(); }
 });
 

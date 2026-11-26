@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Settings – DineFlow</title>
+<link rel="stylesheet" href="css/auth.css">
+</head><body>
+<div class="top"><a class="logo" href="dashboard.html">Dine<span>Flow</span></a><button class="btn ghost" id="out">Log out</button></div>
+<div class="nav" id="nav"></div>
+<div class="wrap">
+  <h2>Settings</h2>
+  <div class="panel">
+    <form id="f">
+      <label>Restaurant name</label><input id="name" required maxlength="60">
+      <label>Phone (optional)</label><input id="phone" type="tel" maxlength="20">
+      <label>Brand color</label><input id="color" type="color" style="height:46px;padding:4px">
+      <label>UPI ID (for customer payments)</label>
+      <input id="upi" placeholder="yourname@okhdfcbank" autocapitalize="none">
+      <div class="hint">Customers will pay directly to this UPI ID. Leave empty to accept cash only.</div>
+      <button class="btn" id="btn">Save settings</button>
+      <div class="msg" id="msg"></div>
+    </form>
+  </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/config.js"></script>
+<script src="js/admin.js"></script>
+<script>
+let R;
+const say = (t, c) => { $('msg').textContent = t; $('msg').className = 'msg ' + (c || ''); };
+async function load(){
+  const { data, error } = await dfClient.from('restaurants').select('name,phone,brand_color,upi_id').eq('id', R.id).single();
+  if (error) return say(error.message, 'err');
+  $('name').value = data.name; $('phone').value = data.phone || ''; $('color').value = data.brand_color || '#ff7a1a'; $('upi').value = data.upi_id || '';
+}
+$('f').addEventListener('submit', async e => {
+  e.preventDefault(); $('btn').disabled = true; say('Saving…');
+  const { error } = await dfClient.from('restaurants').update({
+    name: $('name').value.trim(), phone: $('phone').value.trim() || null,
+    brand_color: $('color').value, upi_id: $('upi').value.trim() || null
+  }).eq('id', R.id);
+  $('btn').disabled = false;
+  say(error ? (error.message.includes('upi_id') ? 'UPI ID looks invalid. Example: name@okhdfcbank' : error.message) : 'Saved ✓', error ? 'err' : 'ok');
+});
+adminInit('admin-settings.html').then(x => { if (x) { R = x.r; load(); } });
+</script>
+</body></html>
