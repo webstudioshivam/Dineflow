@@ -47,8 +47,8 @@ async function init(){
       <div class="stat"><b>0</b><span>Tables</span></div>
       <div class="stat"><b>0</b><span>Menu items</span></div>
     </div>
-    <div class="panel"><b>Next:</b> Customer ordering page <span class="soon">soon</span> · Kitchen <span class="soon">soon</span></div>`;
-  const links = [['dashboard.html','Home'],['admin-menu.html','Menu'],['admin-tables.html','Tables & QR']];
+    <div class="panel"><b>Next:</b> Waiter view &amp; analytics <span class="soon">soon</span> · Online payments <span class="soon">soon</span></div>`;
+  const links = [['dashboard.html','Home'],['admin-menu.html','Menu'],['admin-tables.html','Tables & QR'],['kitchen.html','Kitchen']];
   $('nav').innerHTML = links.map(([h,t]) => `<a href="${h}" class="${h==='dashboard.html'?'on':''}">${t}</a>`).join('');
   const cnt = async tb => (await dfClient.from(tb).select('id', { count: 'exact', head: true }).eq('restaurant_id', r.id)).count || 0;
   const [nt, nm] = await Promise.all([cnt('dining_tables'), cnt('menu_items')]);

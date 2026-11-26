@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kitchen – DineFlow</title>
+<link rel="stylesheet" href="css/auth.css">
+<style>
+.board{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:14px;margin-top:14px;align-items:start}
+.col h3{font-size:14px;letter-spacing:.5px;color:var(--muted);margin-bottom:8px;display:flex;justify-content:space-between}
+.col h3 span{background:var(--card);border:1px solid var(--line);border-radius:99px;padding:0 10px;color:var(--text)}
+.o{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:10px}
+.o.new{border-color:var(--accent);box-shadow:0 0 0 2px rgba(255,122,26,.25)}
+.o .h{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.o .h b{font-size:18px}
+.o .age{font-size:12px;color:var(--muted)}
+.o li{list-style:none;padding:3px 0;font-size:15px}
+.o li b{color:var(--accent)}
+.o .note{background:#2a1a0d;border-radius:8px;padding:6px 10px;font-size:13px;margin-top:8px}
+.o .acts{display:flex;gap:6px;margin-top:12px;flex-wrap:wrap}
+.o .acts .btn{flex:1}
+.call{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--line)}
+.call:last-child{border:0}
+.tag{font-size:12px;border-radius:99px;padding:1px 9px;background:#12301f;color:var(--ok)}
+.tag.u{background:#33201a;color:#ff9a4d}
+.bar2{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+</style>
+</head><body>
+<div class="top"><a class="logo" href="dashboard.html">Dine<span>Flow</span></a><button class="btn ghost" id="out">Log out</button></div>
+<div class="nav" id="nav"></div>
+<div class="wrap" style="max-width:1200px">
+  <div class="bar2" style="justify-content:space-between">
+    <h2>Kitchen</h2>
+    <div class="bar2"><span id="live" class="tag u">connecting…</span><button class="btn sm ghost" id="snd">🔇 Enable sound</button></div>
+  </div>
+
+  <div class="panel" id="callsPanel" style="display:none"><b>🔔 Waiter calls</b><div id="calls"></div></div>
+
+  <div class="board">
+    <div class="col"><h3>NEW <span id="n1">0</span></h3><div id="c1"></div></div>
+    <div class="col"><h3>PREPARING <span id="n2">0</span></h3><div id="c2"></div></div>
+    <div class="col"><h3>READY <span id="n3">0</span></h3><div id="c3"></div></div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/config.js"></script>
+<script src="js/admin.js"></script>
+<script>
+let R, tables = {}, seen = null, sound = false, actx;
+const label = id => tables[id] ? 'Table ' + tables[id] : 'No table';
+const ago = ts => { const m = Math.floor((Date.now() - new Date(ts)) / 60000); return m < 1 ? 'just now' : m + ' min ago'; };
+
+function beep(){
+  if (!sound) return;
+  try { actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+    const o = actx.createOscillator(), g = actx.createGain(); o.connect(g); g.connect(actx.destination);
+    o.frequency.value = 880; g.gain.value = .15; o.start(); o.stop(actx.currentTime + .25); } catch(e){}
+}
+$('snd').onclick = () => { sound = !sound; $('snd').textContent = sound ? '🔔 Sound on' : '🔇 Enable sound'; if (sound) { beep(); } };
+
+function card(o, fresh){
+  const next = { pending: ['preparing', 'Start preparing'], preparing: ['ready', 'Mark ready'], ready: ['served', 'Mark served'] }[o.status];
+  return `<div class="o ${fresh ? 'new' : ''}">
+    <div class="h"><b>${esc(label(o.table_id))}</b><span class="age">${ago(o.created_at)} · ₹${Number(o.total).toFixed(0)}</span></div>
+    <ul>${(o.order_items || []).map(i => `<li><b>${i.qty}×</b> ${esc(i.name)}</li>`).join('')}</ul>
+    ${o.note ? `<div class="note">📝 ${esc(o.note)}</div>` : ''}
+    <div class="acts">
+      <button class="btn sm" data-id="${o.id}" data-to="${next[0]}">${next[1]}</button>
+      ${o.status === 'ready' && o.payment_status !== 'paid' ? `<button class="btn sm ghost" data-paid="${o.id}">Mark paid (cash)</button>` : ''}
+      ${o.payment_status === 'paid' ? '<span class="tag">Paid</span>' : ''}
+      ${o.status === 'pending' ? `<button class="btn sm danger" data-id="${o.id}" data-to="cancelled">Cancel</button>` : ''}
+    </div></div>`;
+}
+
+async function load(){
+  const [o, c, t] = await Promise.all([
+    dfClient.from('orders').select('*, order_items(*)').eq('restaurant_id', R.id).in('status', ['pending','preparing','ready']).order('created_at'),
+    dfClient.from('waiter_calls').select('*').eq('restaurant_id', R.id).eq('is_resolved', false).order('created_at'),
+    dfClient.from('dining_tables').select('id,label').eq('restaurant_id', R.id)
+  ]);
+  if (o.error) { $('live').textContent = o.error.message; return; }
+  (t.data || []).forEach(x => tables[x.id] = x.label);
+  const orders = o.data || [];
+  const ids = new Set(orders.map(x => x.id));
+  const fresh = seen ? orders.filter(x => !seen.has(x.id)) : [];
+  if (fresh.length) beep();
+  const freshIds = new Set(fresh.map(x => x.id)); seen = ids;
+  ['pending','preparing','ready'].forEach((s, i) => {
+    const list = orders.filter(x => x.status === s);
+    $('c' + (i+1)).innerHTML = list.map(x => card(x, freshIds.has(x.id))).join('') || '<div style="color:var(--muted);font-size:13px">—</div>';
+    $('n' + (i+1)).textContent = list.length;
+  });
+  const calls = c.data || [];
+  $('callsPanel').style.display = calls.length ? 'block' : 'none';
+  $('calls').innerHTML = calls.map(x => `<div class="call"><span><b>${esc(label(x.table_id))}</b> · ${esc(x.reason)} <span class="age">${ago(x.created_at)}</span></span><button class="btn sm" data-call="${x.id}">Done</button></div>`).join('');
+}
+
+document.addEventListener('click', async e => {
+  const b = e.target.closest('button'); if (!b) return;
+  if (b.dataset.to) { b.disabled = true; await dfClient.from('orders').update({ status: b.dataset.to }).eq('id', b.dataset.id); load(); }
+  if (b.dataset.paid) { b.disabled = true; await dfClient.from('orders').update({ payment_status: 'paid', payment_method: 'cash' }).eq('id', b.dataset.paid); load(); }
+  if (b.dataset.call) { b.disabled = true; await dfClient.from('waiter_calls').update({ is_resolved: true }).eq('id', b.dataset.call); load(); }
+});
+
+adminInit('kitchen.html').then(x => {
+  if (!x) return; R = x.r; load();
+  const f = 'restaurant_id=eq.' + R.id;
+  dfClient.channel('kitchen-' + R.id)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'orders', filter: f }, load)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'waiter_calls', filter: f }, load)
+    .subscribe(st => { $('live').textContent = st === 'SUBSCRIBED' ? '● Live' : st.toLowerCase(); $('live').className = 'tag' + (st === 'SUBSCRIBED' ? '' : ' u'); });
+  setInterval(load, 20000); // fallback + refresh "x min ago"
+});
+</script>
+</body></html>
