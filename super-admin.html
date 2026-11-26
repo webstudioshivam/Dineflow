@@ -4,9 +4,10 @@
 <title>Super Admin – DineFlow</title>
 <link rel="stylesheet" href="css/auth.css">
 <style>.r{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-top:12px}
-.r.off{opacity:.65}.r h3{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.r.off{opacity:.7}.r h3{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
 .meta{color:var(--muted);font-size:13px;margin:4px 0 10px}.tag{font-size:12px;border-radius:99px;padding:1px 9px;background:#12301f;color:var(--ok)}
-.tag.u{background:#33201a;color:#ff9a4d}</style>
+.tag.u{background:#33201a;color:#ff9a4d}.tag.p{background:#2a2a10;color:#ffd24d}
+.filt{display:flex;gap:8px;margin-top:16px;overflow-x:auto}</style>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#0f0f10">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
@@ -15,9 +16,15 @@
 <div class="wrap">
   <div class="grid">
     <div class="stat"><b id="s1">–</b><span>Restaurants</span></div>
-    <div class="stat"><b id="s2">–</b><span>Active</span></div>
+    <div class="stat"><b id="s2">–</b><span>Live now</span></div>
     <div class="stat"><b id="s3">–</b><span>Monthly subscription value</span></div>
-    <div class="stat"><b id="s4">–</b><span>Total orders</span></div>
+    <div class="stat"><b id="s4">–</b><span>Waiting for activation</span></div>
+  </div>
+  <div class="filt">
+    <button class="btn sm ghost" data-f="all">All</button>
+    <button class="btn sm ghost" data-f="pending">Waiting</button>
+    <button class="btn sm ghost" data-f="live">Live</button>
+    <button class="btn sm ghost" data-f="ended">Expired / Suspended</button>
   </div>
   <div id="list"></div>
 </div>
@@ -27,46 +34,62 @@
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const rs = n => '₹' + Math.round(n).toLocaleString('en-IN');
-let rows = [], plans = [];
+const today = () => new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
+const addDays = (iso, n) => { const d = new Date(iso + 'T00:00:00Z'); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); };
+const state = r => !r.is_active ? (r.paid_until ? 'suspended' : 'pending') : (r.paid_until && r.paid_until < today() ? 'expired' : 'live');
+let rows = [], plans = [], filter = 'all';
 $('out').onclick = async () => { await dfClient.auth.signOut(); location.href = 'login.html'; };
 
 async function load(){
   const [o, p] = await Promise.all([dfClient.rpc('admin_overview'), dfClient.from('plans').select('*').order('price_inr')]);
   if (o.error) { $('list').innerHTML = `<p class="msg err">${esc(o.error.message)}</p>`; return; }
-  rows = o.data || []; plans = p.data || [];
+  rows = o.data || []; plans = p.data || []; render();
+}
+function render(){
   const price = id => (plans.find(x => x.id === id) || {}).price_inr || 0;
-  const act = rows.filter(r => r.is_active);
-  $('s1').textContent = rows.length; $('s2').textContent = act.length;
-  $('s3').textContent = rs(act.reduce((s, r) => s + price(r.plan_id), 0));
-  $('s4').textContent = rows.reduce((s, r) => s + Number(r.orders_count), 0);
-  $('list').innerHTML = rows.map(r => `<div class="r ${r.is_active ? '' : 'off'}">
-    <h3><span>${esc(r.name)}</span><span class="tag ${r.is_active ? '' : 'u'}">${r.is_active ? 'Active' : 'Suspended'}</span></h3>
+  const live = rows.filter(r => state(r) === 'live');
+  $('s1').textContent = rows.length; $('s2').textContent = live.length;
+  $('s3').textContent = rs(live.reduce((s, r) => s + price(r.plan_id), 0));
+  $('s4').textContent = rows.filter(r => state(r) === 'pending').length;
+  const show = rows.filter(r => { const s = state(r); return filter === 'all' || (filter === 'pending' && s === 'pending') || (filter === 'live' && s === 'live') || (filter === 'ended' && (s === 'expired' || s === 'suspended')); });
+  const label = { live: ['Live', ''], pending: ['Waiting', 'p'], expired: ['Expired', 'u'], suspended: ['Suspended', 'u'] };
+  $('list').innerHTML = show.map(r => { const s = state(r); return `<div class="r ${s === 'live' ? '' : 'off'}">
+    <h3><span>${esc(r.name)}</span><span class="tag ${label[s][1]}">${label[s][0]}</span></h3>
     <div class="meta">/${esc(r.slug)} · ${r.orders_count} orders · ${rs(r.revenue)} sales · ${r.staff_count} staff · joined ${new Date(r.created_at).toLocaleDateString('en-IN')}${r.last_order ? ' · last order ' + new Date(r.last_order).toLocaleDateString('en-IN') : ''}</div>
     <div class="row">
       <div><label>Plan</label><select data-plan="${r.id}">${plans.map(x => `<option value="${x.id}" ${x.id === r.plan_id ? 'selected' : ''}>${esc(x.name)} – ₹${x.price_inr}</option>`).join('')}</select></div>
-      <div><label>Custom domain (Premium)</label><input data-dom="${r.id}" value="${esc(r.custom_domain || '')}" placeholder="menu.example.com" ${(plans.find(x => x.id === r.plan_id) || {}).custom_domain ? '' : 'disabled'}></div>
+      <div><label>Paid until</label><input type="date" data-until="${r.id}" value="${esc(r.paid_until || '')}"></div>
     </div>
-    <div class="row" style="margin-top:12px"><button class="btn sm ghost" data-save="${r.id}">Save</button>
-    <button class="btn sm ${r.is_active ? 'danger' : ''}" data-toggle="${r.id}">${r.is_active ? 'Suspend' : 'Activate'}</button></div>
-  </div>`).join('') || '<p style="color:var(--muted);margin-top:16px">No restaurants yet.</p>';
+    <div class="row" style="margin-top:10px"><div><label>Custom domain (Premium)</label><input data-dom="${r.id}" value="${esc(r.custom_domain || '')}" placeholder="menu.example.com" ${(plans.find(x => x.id === r.plan_id) || {}).custom_domain ? '' : 'disabled'}></div></div>
+    <div class="row" style="margin-top:12px">
+      <button class="btn sm" data-ext="${r.id}">Paid · +30 days</button>
+      <button class="btn sm ghost" data-save="${r.id}">Save changes</button>
+      <button class="btn sm danger" data-toggle="${r.id}">${r.is_active ? 'Suspend' : 'Activate'}</button>
+    </div></div>`; }).join('') || '<p style="color:var(--muted);margin-top:16px">Nothing here.</p>';
+  document.querySelectorAll('.filt button').forEach(b => b.style.borderColor = b.dataset.f === filter ? 'var(--accent)' : '');
 }
+const upd = async (id, patch) => { const { error } = await dfClient.from('restaurants').update(patch).eq('id', id); if (error) alert(error.message); await load(); };
+
 document.addEventListener('click', async e => {
   const b = e.target.closest('button'); if (!b) return;
+  if (b.dataset.f) { filter = b.dataset.f; render(); }
+  if (b.dataset.ext) { // owner paid: extend 30 days from today or from current end date, whichever is later
+    const r = rows.find(x => x.id === b.dataset.ext), base = r.paid_until && r.paid_until > today() ? r.paid_until : today();
+    if (confirm('Extend ' + r.name + ' until ' + addDays(base, 30) + ' and activate?')) upd(r.id, { is_active: true, paid_until: addDays(base, 30) });
+  }
   if (b.dataset.toggle) {
     const r = rows.find(x => x.id === b.dataset.toggle);
-    if (!confirm((r.is_active ? 'Suspend ' : 'Activate ') + r.name + '?')) return;
-    const { error } = await dfClient.from('restaurants').update({ is_active: !r.is_active }).eq('id', r.id);
-    if (error) alert(error.message); load();
+    if (confirm((r.is_active ? 'Suspend ' : 'Activate ') + r.name + '?')) upd(r.id, { is_active: !r.is_active });
   }
   if (b.dataset.save) {
     const id = b.dataset.save, dom = document.querySelector(`[data-dom="${id}"]`);
-    const { error } = await dfClient.from('restaurants').update({ plan_id: document.querySelector(`[data-plan="${id}"]`).value, custom_domain: dom.disabled ? null : (dom.value.trim().toLowerCase() || null) }).eq('id', id);
-    if (error) alert(error.message); else b.textContent = 'Saved ✓'; setTimeout(load, 700);
+    upd(id, { plan_id: document.querySelector(`[data-plan="${id}"]`).value, paid_until: document.querySelector(`[data-until="${id}"]`).value || null,
+      custom_domain: dom.disabled ? null : (dom.value.trim().toLowerCase() || null) });
   }
 });
-document.addEventListener('change', e => { // enable/disable domain field when plan changes
+document.addEventListener('change', e => {
   const id = e.target.dataset.plan; if (!id) return;
-  const dom = document.querySelector(`[data-dom="${id}"]`); dom.disabled = !(plans.find(x => x.id === e.target.value) || {}).custom_domain;
+  document.querySelector(`[data-dom="${id}"]`).disabled = !(plans.find(x => x.id === e.target.value) || {}).custom_domain;
 });
 (async () => {
   const { data: { session } } = await dfClient.auth.getSession();

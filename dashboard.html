@@ -26,14 +26,14 @@ async function init(){
   if (!session) { location.href = 'login.html'; return; }
 
   let { data: mem, error } = await dfClient.from('restaurant_members')
-    .select('role, restaurants(id, name, slug, plan_id)').eq('user_id', session.user.id).limit(1);
+    .select('role, restaurants(id, name, slug, plan_id, is_active, paid_until)').eq('user_id', session.user.id).limit(1);
   if (error) { $('app').innerHTML = '<p style="color:var(--err)">' + esc(error.message) + '</p>'; return; }
 
   if (!mem.length) {
     const { data: isAdmin } = await dfClient.rpc('is_platform_admin');
     if (isAdmin) { location.href = 'super-admin.html'; return; }
     await dfClient.rpc('claim_invites');
-    ({ data: mem } = await dfClient.from('restaurant_members').select('role, restaurants(id, name, slug, plan_id)').eq('user_id', session.user.id).limit(1));
+    ({ data: mem } = await dfClient.from('restaurant_members').select('role, restaurants(id, name, slug, plan_id, is_active, paid_until)').eq('user_id', session.user.id).limit(1));
   }
 
   // First login after registering: create the restaurant
@@ -46,6 +46,14 @@ async function init(){
     return init();
   }
 
+  if (!dfLive(mem[0].restaurants)) {
+    const x = mem[0].restaurants;
+    const [h, t] = !x.is_active && !x.paid_until ? ['Waiting for activation', 'Your restaurant is registered. It will go live once your plan is activated.']
+      : x.paid_until && x.paid_until < dfToday() ? ['Subscription ended', 'Your plan ended on ' + x.paid_until + '. Renew to keep taking orders.']
+      : ['Account suspended', 'Your account is currently suspended.'];
+    $('app').innerHTML = `<div class="panel" style="text-align:center;margin-top:40px"><h2>${h}</h2><p style="color:var(--muted);margin:10px 0">${esc(t)}</p><p><b>${esc((window.DF_CONFIG || {}).SUPPORT_TEXT || '')}</b></p></div>`;
+    return;
+  }
   if (['kitchen','waiter'].includes(mem[0].role)) { location.href = 'kitchen.html'; return; }
   const r = mem[0].restaurants;
   $('app').innerHTML = `
