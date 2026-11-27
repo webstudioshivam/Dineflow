@@ -1,0 +1,50 @@
+/* CaffCrew shared brand layer: header logo, typography, 3D coin, install button. */
+:root{--df-display:"Bricolage Grotesque",ui-sans-serif,system-ui,sans-serif;--df-body:"Instrument Sans",ui-sans-serif,system-ui,sans-serif}
+/* header logo */
+.logo{display:inline-flex;align-items:center;gap:10px}
+.logo .lg,.mlogo .lg{width:36px;height:36px;border-radius:50%;flex:none;box-shadow:0 2px 12px rgba(255,122,26,.28);transition:transform .7s cubic-bezier(.2,.9,.3,1.2)}
+.logo:hover .lg{transform:perspective(200px) rotateY(360deg)}
+.brand .logo{align-self:flex-start}
+.brand .logo .lg{width:44px;height:44px}
+@media(max-width:860px){.mlogo{display:inline-flex;align-items:center;gap:10px}}
+.olg{position:absolute;right:14px;top:14px;width:32px;height:32px;border-radius:50%;box-shadow:0 2px 10px rgba(0,0,0,.4)}
+/* typography */
+body{font-optical-sizing:auto;text-rendering:optimizeLegibility}
+h1,h2,h3{text-wrap:balance}p,li{text-wrap:pretty}
+.df-app{font-family:var(--df-body)}
+.df-app button,.df-app input,.df-app select,.df-app textarea{font-family:inherit}
+.df-app h1,.df-app h2,.df-app h3,.df-app .stat b,.df-app .logo{font-family:var(--df-display);letter-spacing:-.025em}
+.df-app .logo{font-weight:800;font-size:23px;letter-spacing:-.04em}
+.df-app .stat b{font-variant-numeric:tabular-nums;font-weight:700;letter-spacing:-.03em}
+.df-app .top{position:sticky;top:0;z-index:30;background:rgba(15,15,16,.86);backdrop-filter:blur(12px);gap:10px}
+.df-app .nav a{transition:background .2s,color .2s}
+.df-app .stat,.df-app .panel{transition:transform .3s cubic-bezier(.2,.9,.3,1.2),border-color .2s}
+.df-app .stat:hover{transform:perspective(700px) rotateX(3deg) translateY(-3px);border-color:#4a3320}
+.df-home h1{font-weight:800;letter-spacing:-.045em;line-height:.98}
+.df-home .hero h1{font-size:clamp(42px,6.8vw,84px)}
+.df-home h2{font-weight:800;letter-spacing:-.035em}
+.df-home .amt{font-variant-numeric:tabular-nums}
+.df-home .plan{transform:perspective(900px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg));transition:transform .25s ease-out}
+/* 3D coin */
+.coin{--s:120px;--t:12px;width:var(--s);height:var(--s);position:relative;transform-style:preserve-3d}
+.coin>i{position:absolute;inset:0;border-radius:50%;display:block}
+.coin .f,.coin .b{background:#fbf6ee center/cover no-repeat;backface-visibility:hidden;overflow:hidden}
+.coin .f{transform:translateZ(calc(var(--t)/2 + .5px))}
+.coin .b{transform:rotateY(180deg) translateZ(calc(var(--t)/2 + .5px))}
+.coin .f::after{content:"";position:absolute;inset:0;background:linear-gradient(115deg,transparent 38%,rgba(255,255,255,.6) 50%,transparent 62%);background-size:260% 100%;background-position:130% 0;animation:dfsheen 4s ease-in-out 1.8s infinite}
+@keyframes dfsheen{0%{background-position:130% 0}45%,100%{background-position:-60% 0}}
+.hcoin{position:absolute;left:-14px;top:64px;z-index:3;perspective:700px;transform:translateZ(120px)}
+.hcoin .coin{animation:dfhero 6s ease-in-out infinite alternate;filter:drop-shadow(0 18px 24px rgba(0,0,0,.5))}
+@keyframes dfhero{from{transform:translateY(-6px) rotateX(-6deg) rotateY(-28deg)}to{transform:translateY(8px) rotateX(5deg) rotateY(28deg)}}
+.bcoin{position:absolute;right:52px;bottom:34px;perspective:800px;z-index:1}
+.bcoin .coin{animation:dfhero 6s ease-in-out infinite alternate;filter:drop-shadow(0 18px 24px rgba(0,0,0,.5))}
+@media(max-width:920px){.hcoin{display:none}}
+@media(max-width:860px){.bcoin{display:none}}
+/* install */
+.dfinstall{background:transparent;color:var(--saffron,#ff7a1a);border:1px solid var(--saffron,#ff7a1a);font:700 14px var(--df-body);padding:8px 14px;border-radius:10px;cursor:pointer;margin-left:auto;transition:background .2s,color .2s}
+.dfinstall:hover{background:var(--saffron,#ff7a1a);color:#1a1006}
+.dfinstall[hidden]{display:none}
+.nl .dfinstall{margin-left:0}
+.dftoast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:9999;background:#1c1a17;color:#f4efe8;border:1px solid #2f2b26;border-radius:14px;padding:14px 18px;font:500 15px var(--df-body);max-width:90vw;box-shadow:0 14px 40px rgba(0,0,0,.5)}
+@media(prefers-reduced-motion:reduce){.coin,.coin *,.logo .lg{animation:none!important;transition:none!important}}
+.lt{font-style:normal}
