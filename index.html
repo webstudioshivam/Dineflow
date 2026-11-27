@@ -174,16 +174,31 @@
     html{scroll-behavior:auto}
   }
 </style>
+
+
+
+
+
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#121110">
-<link rel="icon" type="image/png" sizes="48x48" href="icons/favicon-48.png">
+<meta name="application-name" content="CaffCrew">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="CaffCrew">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16.png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="stylesheet" href="css/brand.css">
+<script src="js/coin.js"></script>
 <script src="js/splash.js"></script>
+<script src="js/pwa.js" defer></script>
 </head>
-<body>
+<body class="df-home">
 
 <nav><div class="wrap">
-  <a href="#top" class="logo">Caff<b>Crew</b></a>
+  <a href="#top" class="logo"><img class="lg" src="icons/logo-96.png" alt="" width="36" height="36"><em class="lt">Caff<b>Crew</b></em></a>
   <div class="nl">
     <a href="#roles" class="hide">How it works</a>
     <a href="#pricing" class="hide">Pricing</a>
@@ -205,7 +220,7 @@
   </div>
 
   <div class="stage" aria-label="Animated example of an order going from a guest's phone to the kitchen screen">
-    <div class="tilt" id="tilt">
+    <div class="tilt" id="tilt"><div class="hcoin" data-coin="96"></div>
     <div class="phone"><div class="screen">
       <div class="sh"><b>Royal Palace</b><span>Table 5</span></div>
       <div class="dish"><div class="ph">🧆</div><div class="t"><h4><span class="vd"></span>Paneer Tikka</h4><small>₹260</small></div><div class="add" id="a1">ADD</div></div>
@@ -280,13 +295,13 @@
 <section id="pricing"><div class="wrap">
   <div class="head"><h2>Pricing</h2><p>Per restaurant, per month. Pay by UPI or bank transfer.</p></div>
   <div class="plans">
-    <div class="plan"><h3>Starter</h3><p class="for">For a small cafe getting started.</p><div class="amt">₹499<small> /month</small></div>
+    <div data-tilt class="plan"><h3>Starter</h3><p class="for">For a small cafe getting started.</p><div class="amt">₹499<small> /month</small></div>
       <ul><li>QR menu and ordering</li><li>Kitchen screen</li><li>Up to 10 tables</li></ul>
       <a href="register.html" class="btn line">Choose Starter</a></div>
-    <div class="plan best"><h3>Professional</h3><p class="for">For a restaurant with a kitchen and floor staff.</p><div class="amt">₹999<small> /month</small></div>
+    <div data-tilt class="plan best"><h3>Professional</h3><p class="for">For a restaurant with a kitchen and floor staff.</p><div class="amt">₹999<small> /month</small></div>
       <ul><li>Everything in Starter</li><li>Unlimited tables</li><li>Waiter calls and sales reports</li><li>Staff logins</li></ul>
       <a href="register.html" class="btn">Choose Professional</a></div>
-    <div class="plan"><h3>Premium</h3><p class="for">For a brand that wants its own web address.</p><div class="amt">₹1,999<small> /month</small></div>
+    <div data-tilt class="plan"><h3>Premium</h3><p class="for">For a brand that wants its own web address.</p><div class="amt">₹1,999<small> /month</small></div>
       <ul><li>Everything in Professional</li><li>Your own domain, like menu.yourrestaurant.com</li><li>Priority support</li></ul>
       <a href="register.html" class="btn line">Choose Premium</a></div>
   </div>
@@ -316,7 +331,7 @@
   </div>
 </div></section>
 
-<footer><div class="wrap"><span>© <span id="y"></span> CaffCrew. One platform, every restaurant.</span><span>WhatsApp +91 7897383084</span></div></footer>
+<footer><div class="wrap"><span><img class="lg" src="icons/logo-96.png" alt="" width="22" height="22" style="width:22px;height:22px;border-radius:50%;vertical-align:-6px;margin-right:8px">© <span id="y"></span> CaffCrew. One platform, every restaurant.</span><span>WhatsApp +91 7897383084</span></div></footer>
 
 <script>
 document.getElementById('y').textContent = new Date().getFullYear();
@@ -383,6 +398,6 @@ document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () =>
   run();
 })();
 </script>
-<script>if('serviceWorker' in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));</script>
+
 </body>
 </html>

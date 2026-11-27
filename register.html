@@ -5,19 +5,34 @@
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600..800&family=Instrument+Sans:wght@400..700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/entry.css">
-<link rel="manifest" href="manifest.json"><meta name="theme-color" content="#121110"><link rel="icon" type="image/png" sizes="48x48" href="icons/favicon-48.png">
+
+
+
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#121110">
+<meta name="application-name" content="CaffCrew">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="CaffCrew">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16.png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="stylesheet" href="css/brand.css">
+<script src="js/coin.js"></script>
 <script src="js/splash.js"></script>
-</head><body>
+<script src="js/pwa.js" defer></script>
+</head><body class="df-entry">
 <div class="split">
   <aside class="brand">
-    <a href="index.html" class="logo">Caff<b>Crew</b></a>
+    <a href="index.html" class="logo"><img class="lg" src="icons/logo-96.png" alt="" width="36" height="36"><em class="lt">Caff<b>Crew</b></em></a><div class="bcoin" data-coin="110"></div>
     <div><h2>Put your restaurant on CaffCrew.</h2>
       <ul><li><b>Guests order from the table</b> by scanning a QR code</li><li><b>The kitchen sees orders live</b> with a beep for each new one</li><li><b>You see sales</b> for today, this week and this month</li></ul></div>
     <small>One platform. Every restaurant.</small>
   </aside>
   <main class="side"><div class="box">
-    <a href="index.html" class="mlogo">Caff<b>Crew</b></a>
+    <a href="index.html" class="mlogo"><img class="lg" src="icons/logo-96.png" alt="" width="36" height="36"><em class="lt">Caff<b>Crew</b></em></a>
     <h1>Register your restaurant</h1>
     <p class="sub">Your account is switched on after your first payment.</p>
     <form id="f">
@@ -66,5 +81,5 @@ $('f').addEventListener('submit', async e => {
   else { say('Check your email to confirm your account, then log in.', 'ok'); busy(false); }
 });
 </script>
-<script>if('serviceWorker' in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));</script>
+
 </body></html>
