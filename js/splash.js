@@ -1,14 +1,22 @@
 /* CaffCrew launch splash: 3D logo coin + extruded wordmark. Once per session; ?splash=1 forces it; tap to skip. */
 (function () {
+  var rm = false;
   try {
-    if (location.search.indexOf('splash=1') < 0) {
-      if (sessionStorage.getItem('df_splash')) return;
-      if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    var force = location.search.indexOf('splash=1') > -1;
+    if (!force) {
+      var nav = (performance.getEntriesByType && performance.getEntriesByType('navigation')[0]) || {};
+      if (nav.type === 'reload' || nav.type === 'back_forward') return;
+      var interrupted = sessionStorage.getItem('df_splash_pending') === '1';   // previous page redirected away mid-splash
+      var entry = true;                                                         // app launch / outside link = no same-site referrer
+      try { entry = !document.referrer || new URL(document.referrer).origin !== location.origin; } catch (e) {}
+      if (!interrupted && !entry) return;
     }
-    sessionStorage.setItem('df_splash', '1');
+    sessionStorage.setItem('df_splash_pending', '1');
+    rm = matchMedia('(prefers-reduced-motion: reduce)').matches;
   } catch (e) { return; }
   var css = '#dfsplash{position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;flex-direction:column;background:#121110 radial-gradient(520px 380px at 50% 40%,rgba(255,122,26,.22),transparent 70%);transition:opacity .5s;overflow:hidden}' +
   '#dfsplash.out{opacity:0;pointer-events:none}' +
+  '#dfsplash.rm .coin,#dfsplash.rm .dfl,#dfsplash.rm .dftg{animation:none!important;opacity:1!important;transform:none}#dfsplash.rm .dfw{transform:none}' +
   '#dfsplash .dfc{perspective:900px;margin-bottom:34px}' +
   '#dfsplash .coin{opacity:0}#dfsplash.go .coin{animation:dfcoin 1.6s cubic-bezier(.2,.8,.2,1) both,dfidle 3.4s ease-in-out 1.6s infinite alternate}' +
   '@keyframes dfcoin{0%{opacity:0;transform:translateZ(-600px) rotateX(24deg) rotateY(-720deg) scale(.5)}35%{opacity:1}100%{opacity:1;transform:rotateX(-6deg) rotateY(-16deg)}}' +
@@ -23,7 +31,7 @@
   '#dfsplash .dftg{margin-top:20px;color:#a59c90;font:500 clamp(14px,3.6vw,17px) "Instrument Sans",ui-sans-serif,system-ui,sans-serif;opacity:0}' +
   '#dfsplash.go .dftg{animation:dftag .7s ease 1.9s both}@keyframes dftag{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}';
   var st = document.createElement('style'); st.textContent = css; document.head.appendChild(st);
-  var box = document.createElement('div'); box.id = 'dfsplash'; box.setAttribute('role', 'presentation');
+  var box = document.createElement('div'); box.id = 'dfsplash'; if (rm) box.className = 'rm'; box.setAttribute('role', 'presentation');
   var cw = document.createElement('div'); cw.className = 'dfc';
   var size = Math.max(110, Math.min(190, Math.round(Math.min(innerWidth, innerHeight) * .32)));
   if (window.DFCoin) cw.appendChild(DFCoin.build(size));
@@ -44,9 +52,9 @@
   var tag = document.createElement('div'); tag.className = 'dftg'; tag.textContent = 'Your restaurant. Your crew. One system.';
   box.appendChild(cw); box.appendChild(stage); box.appendChild(tag); document.documentElement.appendChild(box);
   var done = false, started = false;
-  function close() { if (done) return; done = true; box.classList.add('out'); setTimeout(function () { box.remove(); st.remove(); }, 600); }
+  function close() { if (done) return; done = true; try { sessionStorage.removeItem('df_splash_pending'); } catch (e) {} box.classList.add('out'); setTimeout(function () { box.remove(); st.remove(); }, 600); }
   box.addEventListener('click', close);
-  function go() { if (started) return; started = true; box.classList.add('go'); setTimeout(close, 3400); }
+  function go() { if (started) return; started = true; box.classList.add('go'); setTimeout(close, rm ? 1800 : 3400); }
   var wait = (document.fonts && document.fonts.load) ? Promise.race([document.fonts.load('800 64px "Bricolage Grotesque"'), new Promise(function (r) { setTimeout(r, 900); })]) : Promise.resolve();
   wait.then(go, go); setTimeout(go, 1200);
 })();
