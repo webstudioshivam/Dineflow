@@ -1,15 +1,15 @@
 <!DOCTYPE html>
 <html lang="en"><head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Dashboard – DineFlow</title>
+<title>Dashboard – CaffCrew</title>
 <link rel="stylesheet" href="css/auth.css">
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#0f0f10">
-<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <script src="js/splash.js"></script>
 </head><body>
 <div class="top">
-  <a class="logo" href="dashboard.html">Dine<span>Flow</span></a>
+  <a class="logo" href="dashboard.html">Caff<span>Crew</span></a>
   <button class="btn ghost" id="out">Log out</button>
 </div>
 <div class="nav" id="nav"></div>
@@ -60,7 +60,7 @@ async function init(){
   $('app').innerHTML = `
     <h2>${esc(r.name)}</h2>
     <p style="color:var(--muted)">Plan: ${esc(r.plan_id)} · Role: ${esc(mem[0].role)}</p>
-    <div class="panel">Your public page: <code>dineflow.in/${esc(r.slug)}</code></div>
+    <div class="panel">Your public page: <code>caffcrew.in/${esc(r.slug)}</code></div>
     <div class="grid">
       <div class="stat"><b>0</b><span>Orders today</span></div>
       <div class="stat"><b>₹0</b><span>Revenue today</span></div>

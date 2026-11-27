@@ -1,6 +1,6 @@
-// DineFlow service worker: network-first for pages/assets, offline fallback from cache.
+// CaffCrew service worker: network-first for pages/assets, offline fallback from cache.
 // Never touches Supabase API calls (cross-origin) so live data is always fresh.
-const CACHE = 'dineflow-v1';
+const CACHE = 'caffcrew-v1';
 self.addEventListener('install', e => { self.skipWaiting(); });
 self.addEventListener('activate', e => {
   e.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim()));
