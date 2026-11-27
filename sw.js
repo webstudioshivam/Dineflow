@@ -1,5 +1,5 @@
 // CaffCrew service worker v2: pages/assets network-first (live data stays fresh), shell cached for offline.
-const CACHE = 'caffcrew-v2';
+const CACHE = 'caffcrew-v3';
 const SHELL = ['./', 'index.html', 'login.html', 'offline.html', 'manifest.json', 'favicon.ico',
   'css/auth.css', 'css/entry.css', 'css/brand.css', 'js/config.js', 'js/admin.js', 'js/splash.js', 'js/coin.js', 'js/pwa.js',
   'icons/logo-96.png', 'icons/logo-256.png', 'icons/icon-192.png'];
