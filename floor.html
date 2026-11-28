@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Floor – CaffCrew</title>
+<link rel="stylesheet" href="css/auth.css">
+<style>
+.board{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:14px;margin-top:14px;align-items:start}
+.col h3{font-size:14px;letter-spacing:.5px;color:var(--muted);margin-bottom:8px;display:flex;justify-content:space-between}
+.col h3 span{background:var(--card);border:1px solid var(--line);border-radius:99px;padding:0 10px;color:var(--text)}
+.o{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:10px}
+.o.new{border-color:var(--accent);box-shadow:0 0 0 2px rgba(255,122,26,.25)}
+.o .h{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.o .h b{font-size:18px}
+.o .age{font-size:12px;color:var(--muted)}
+.o li{list-style:none;padding:3px 0;font-size:15px}
+.o li b{color:var(--accent)}
+.o .note{background:#2a1a0d;border-radius:8px;padding:6px 10px;font-size:13px;margin-top:8px}
+.o .acts{display:flex;gap:6px;margin-top:12px;flex-wrap:wrap}
+.o .acts .btn{flex:1}
+.call{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--line)}
+.call:last-child{border:0}
+.tag{font-size:12px;border-radius:99px;padding:1px 9px;background:#12301f;color:var(--ok)}
+.tag.u{background:#33201a;color:#ff9a4d}
+.bar2{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.tm{font-variant-numeric:tabular-nums;font-weight:700;color:var(--ok)}.tm.warn{color:#ffb020}.tm.late{color:var(--err)}.o.late{border-color:var(--err);animation:lt 1.4s ease-in-out infinite}@keyframes lt{50%{box-shadow:0 0 0 3px rgba(255,107,94,.3)}}
+.wake{margin-left:8px}.tm{font-variant-numeric:tabular-nums;font-weight:700;color:var(--ok)}.tm.warn{color:#ffb020}.tm.late{color:var(--err)}</style>
+
+
+
+
+
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Instrument+Sans:wght@400..700&display=swap" rel="stylesheet">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#121110">
+<meta name="application-name" content="CaffCrew">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="CaffCrew">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="stylesheet" href="css/brand.css">
+<script src="js/coin.js"></script>
+<script src="js/splash.js"></script>
+<script src="js/pwa.js" defer></script>
+</head><body class="df-app">
+<div class="top"><a class="logo" href="dashboard.html"><img class="lg" src="icons/logo-96.png" alt="" width="36" height="36"><em class="lt">Caff<span>Crew</span></em></a><button class="btn ghost" id="out">Log out</button></div>
+<div class="nav" id="nav"></div>
+<div class="wrap" style="max-width:1200px">
+  <div class="bar2" style="justify-content:space-between"><h2>Floor</h2>
+    <div class="bar2"><span id="live" class="tag u">connecting…</span><button class="btn sm ghost" id="snd">🔇 Enable sound</button></div></div>
+  <p style="color:var(--muted);font-size:14px">Only what needs a waiter: table calls, food ready to serve, and bills to collect.</p>
+  <div class="board">
+    <div class="col"><h3>TABLE CALLS <span id="n1">0</span></h3><div id="c1"></div></div>
+    <div class="col"><h3>READY TO SERVE <span id="n2">0</span></h3><div id="c2"></div></div>
+    <div class="col"><h3>PAYMENT DUE <span id="n3">0</span></h3><div id="c3"></div></div>
+  </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/config.js"></script>
+<script src="js/admin.js"></script>
+<script>
+let R, tables = {}, seen = null, sound = false, actx;
+const RL = { water: '💧 Water', napkin: '🧻 Napkins', assistance: '🙋 Needs waiter', bill: '🧾 Bill please' };
+const label = id => tables[id] ? 'Table ' + tables[id] : 'No table';
+const age = ts => { const sec = Math.max(0, Math.floor((Date.now() - new Date(ts)) / 1000)); return String(Math.floor(sec / 60)).padStart(2, '0') + ':' + String(sec % 60).padStart(2, '0'); };
+function tick(){ document.querySelectorAll('[data-ts]').forEach(e => { const m = Math.floor((Date.now() - new Date(e.dataset.ts)) / 60000); e.textContent = '⏱ ' + age(e.dataset.ts); e.className = 'tm ' + (m >= 10 ? 'late' : m >= 5 ? 'warn' : ''); }); }
+setInterval(tick, 1000);
+function beep(){ if (!sound) return; try { actx = actx || new (window.AudioContext || window.webkitAudioContext)(); const o = actx.createOscillator(), g = actx.createGain(); o.connect(g); g.connect(actx.destination); o.frequency.value = 880; g.gain.value = .15; o.start(); o.stop(actx.currentTime + .25); } catch(e){} }
+$('snd').onclick = () => { sound = !sound; $('snd').textContent = sound ? '🔔 Sound on' : '🔇 Enable sound'; if (sound) beep(); };
+const pay = o => o.payment_status === 'paid' ? '<span class="tag">Paid</span>' : `<button class="btn sm" data-paid="${o.id}" data-method="cash">Paid · Cash</button><button class="btn sm ghost" data-paid="${o.id}" data-method="upi">Paid · UPI</button>`;
+const oCard = (o, serve) => `<div class="o"><div class="h"><b>${esc(label(o.table_id))}</b><span class="age"><span class="tm" data-ts="${o.created_at}"></span> · ₹${Number(o.total).toFixed(0)}</span></div>
+  <ul>${(o.order_items || []).map(i => `<li><b>${i.qty}×</b> ${esc(i.name)}</li>`).join('')}</ul>
+  <div class="acts">${serve ? `<button class="btn sm" data-id="${o.id}" data-to="served">Mark served</button>` : ''}${pay(o)}</div></div>`;
+async function load(){
+  const [o, c, t] = await Promise.all([
+    dfClient.from('orders').select('*, order_items(*)').eq('restaurant_id', R.id).in('status', ['ready', 'served']).neq('payment_status', 'paid').order('created_at'),
+    dfClient.from('waiter_calls').select('*').eq('restaurant_id', R.id).eq('is_resolved', false).order('created_at'),
+    dfClient.from('dining_tables').select('id,label').eq('restaurant_id', R.id)
+  ]);
+  if (o.error) { $('live').textContent = o.error.message; return; }
+  (t.data || []).forEach(x => tables[x.id] = x.label);
+  const orders = o.data || [], calls = c.data || [];
+  const ready = orders.filter(x => x.status === 'ready'), due = orders.filter(x => x.status === 'served');
+  const keys = new Set([...ready.map(x => 'o' + x.id), ...calls.map(x => 'c' + x.id)]);
+  if (seen && [...keys].some(k => !seen.has(k))) beep(); seen = keys;
+  const none = '<div style="color:var(--muted);font-size:13px">—</div>';
+  $('c1').innerHTML = calls.map(x => `<div class="o"><div class="h"><b>${esc(label(x.table_id))}</b><span class="age"><span class="tm" data-ts="${x.created_at}"></span></span></div><div style="margin:4px 0 10px">${esc(RL[x.reason] || x.reason)}</div><div class="acts"><button class="btn sm" data-call="${x.id}">Done</button></div></div>`).join('') || none;
+  $('c2').innerHTML = ready.map(x => oCard(x, true)).join('') || none;
+  $('c3').innerHTML = due.map(x => oCard(x, false)).join('') || none;
+  $('n1').textContent = calls.length; $('n2').textContent = ready.length; $('n3').textContent = due.length; tick();
+}
+document.addEventListener('click', async e => {
+  const b = e.target.closest('button'); if (!b) return;
+  if (b.dataset.to) { b.disabled = true; await dfClient.from('orders').update({ status: b.dataset.to }).eq('id', b.dataset.id); load(); }
+  if (b.dataset.paid) { b.disabled = true; await dfClient.from('orders').update({ payment_status: 'paid', payment_method: b.dataset.method }).eq('id', b.dataset.paid); load(); }
+  if (b.dataset.call) { b.disabled = true; await dfClient.from('waiter_calls').update({ is_resolved: true }).eq('id', b.dataset.call); load(); }
+});
+adminInit('floor.html').then(x => {
+  if (!x) return; R = x.r; load();
+  const f = 'restaurant_id=eq.' + R.id;
+  dfClient.channel('floor-' + R.id)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'orders', filter: f }, load)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'waiter_calls', filter: f }, load)
+    .subscribe(st => { $('live').textContent = st === 'SUBSCRIBED' ? '● Live' : st.toLowerCase(); $('live').className = 'tag' + (st === 'SUBSCRIBED' ? '' : ' u'); });
+  setInterval(load, 20000);
+});
+</script>
+</body></html>

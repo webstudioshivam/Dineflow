@@ -73,7 +73,8 @@ async function init(){
     $('app').innerHTML = `<div class="panel" style="text-align:center;margin-top:40px"><h2>${h}</h2><p style="color:var(--muted);margin:10px 0">${esc(t)}</p><p><b>${esc((window.DF_CONFIG || {}).SUPPORT_TEXT || '')}</b></p></div>`;
     return;
   }
-  if (['kitchen','waiter'].includes(mem[0].role)) { location.href = 'kitchen.html'; return; }
+  if (mem[0].role === 'waiter') { location.href = 'floor.html'; return; }
+  if (mem[0].role === 'kitchen') { location.href = 'kitchen.html'; return; }
   const r = mem[0].restaurants;
   $('app').innerHTML = `
     <h2>${esc(r.name)}</h2>
@@ -82,24 +83,45 @@ async function init(){
     <div class="grid">
       <div class="stat"><b>0</b><span>Orders today</span></div>
       <div class="stat"><b>₹0</b><span>Revenue today</span></div>
+      <div class="stat"><b>0</b><span>Pending now</span></div>
+      <div class="stat"><b>₹0</b><span>Average order</span></div>
       <div class="stat"><b>0</b><span>Tables</span></div>
       <div class="stat"><b>0</b><span>Menu items</span></div>
     </div>
+    <div class="panel"><div style="display:flex;justify-content:space-between;align-items:center"><b>Live activity</b><span id="lv" class="tag u">connecting…</span></div><div id="feed" style="margin-top:6px"><p style="color:var(--muted);font-size:14px">Loading…</p></div></div>
     <div class="panel"><b>Quick links</b>
       <div class="row" style="margin-top:10px">
         <a class="btn sm ghost" style="text-decoration:none;text-align:center" href="admin-menu.html">Menu</a>
         <a class="btn sm ghost" style="text-decoration:none;text-align:center" href="admin-tables.html">Tables &amp; QR</a>
         <a class="btn sm ghost" style="text-decoration:none;text-align:center" href="kitchen.html">Kitchen</a>
+        <a class="btn sm ghost" style="text-decoration:none;text-align:center" href="floor.html">Floor</a>
         <a class="btn sm ghost" style="text-decoration:none;text-align:center" href="admin-analytics.html">Analytics</a>
       </div></div>`;
   renderNav('dashboard.html', mem[0].role);
   dfClient.rpc('is_platform_admin').then(({ data }) => { if (data) $('nav').insertAdjacentHTML('beforeend', '<a href="super-admin.html">Super Admin</a>'); });
-  const cnt = async tb => (await dfClient.from(tb).select('id', { count: 'exact', head: true }).eq('restaurant_id', r.id)).count || 0;
-  const [nt, nm] = await Promise.all([cnt('dining_tables'), cnt('menu_items')]);
-  const st = document.querySelectorAll('.stat b'); st[2].textContent = nt; st[3].textContent = nm;
-  const t0 = new Date(); t0.setHours(0,0,0,0);
-  const { data: td } = await dfClient.from('orders').select('total').eq('restaurant_id', r.id).neq('status', 'cancelled').gte('created_at', t0.toISOString());
-  if (td) { st[0].textContent = td.length; st[1].textContent = '₹' + Math.round(td.reduce((a, x) => a + Number(x.total), 0)).toLocaleString('en-IN'); }
+  const money = n => '₹' + Math.round(n).toLocaleString('en-IN');
+  const ST = { pending: 'New', preparing: 'Preparing', ready: 'Ready', served: 'Served', cancelled: 'Cancelled' };
+  const ago = ts => { const m = Math.floor((Date.now() - new Date(ts)) / 60000); return m < 1 ? 'just now' : m < 60 ? m + ' min ago' : Math.floor(m / 60) + ' h ago'; };
+  const st = document.querySelectorAll('.stat b');
+  dfClient.from('menu_items').select('id', { count: 'exact', head: true }).eq('restaurant_id', r.id).then(x => st[5].textContent = x.count || 0);
+  async function refresh(){
+    const t0 = new Date(); t0.setHours(0,0,0,0);
+    const [td, pd, tb, fd] = await Promise.all([
+      dfClient.from('orders').select('total').eq('restaurant_id', r.id).neq('status', 'cancelled').gte('created_at', t0.toISOString()),
+      dfClient.from('orders').select('id', { count: 'exact', head: true }).eq('restaurant_id', r.id).in('status', ['pending', 'preparing']),
+      dfClient.from('dining_tables').select('id,label').eq('restaurant_id', r.id),
+      dfClient.from('orders').select('id,status,total,payment_status,table_id,created_at').eq('restaurant_id', r.id).order('created_at', { ascending: false }).limit(8)
+    ]);
+    const lab = {}; (tb.data || []).forEach(x => lab[x.id] = x.label); st[4].textContent = (tb.data || []).length;
+    if (td.data) { const sum = td.data.reduce((a, x) => a + Number(x.total), 0); st[0].textContent = td.data.length; st[1].textContent = money(sum); st[3].textContent = td.data.length ? money(sum / td.data.length) : '₹0'; }
+    st[2].textContent = pd.count || 0;
+    $('feed').innerHTML = (fd.data || []).map(o => `<div class="item"><div class="info"><b>${lab[o.table_id] ? 'Table ' + esc(lab[o.table_id]) : 'No table'}</b> · ${money(o.total)}<small>${ago(o.created_at)}${o.payment_status === 'paid' ? ' · Paid' : ''}</small></div><span class="tag ${o.status === 'pending' ? 'u' : ''}">${ST[o.status] || o.status}</span></div>`).join('') || '<p style="color:var(--muted);font-size:14px">No orders yet. They will appear here live.</p>';
+  }
+  refresh();
+  dfClient.channel('dash-' + r.id)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'orders', filter: 'restaurant_id=eq.' + r.id }, refresh)
+    .subscribe(s => { $('lv').textContent = s === 'SUBSCRIBED' ? '● Live' : s.toLowerCase(); $('lv').className = 'tag' + (s === 'SUBSCRIBED' ? '' : ' u'); });
+  setInterval(refresh, 30000);
 }
 init();
 </script>
