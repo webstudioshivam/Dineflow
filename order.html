@@ -122,6 +122,7 @@ textarea:focus{outline:none;border-color:var(--accent)}
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/config.js"></script>
+<script src="js/i18n.js"></script>
 <script>
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -131,10 +132,10 @@ const slug = P.get('r'), tableId = P.get('t');
 let R, T, cats = [], items = [], cart = {}, vegOnly = false, activeCat = 'all', orderId = null, pollTimer, lastKey = null, justAdded = false, celebrate = false, rating = 0;
 
 async function init(){
-  if (!slug) return fail('This QR code is not valid. Please ask the staff for help.');
+  if (!slug) return fail(t('badQr'));
   let { data: r, error: re } = await dfClient.from('restaurants').select('id,name,brand_color,upi_id,logo_url,menu_theme').eq('slug', slug).eq('is_active', true).maybeSingle();
   if (re) ({ data: r } = await dfClient.from('restaurants').select('id,name,brand_color,upi_id').eq('slug', slug).eq('is_active', true).maybeSingle());
-  if (!r) return fail('This restaurant is not taking orders right now.');
+  if (!r) return fail(t('closed'));
   R = r; document.title = R.name + ' – Menu';
   if (R.menu_theme === 'light') { const st = document.documentElement.style; [['--bg','#faf6ef'],['--card','#ffffff'],['--line','#e6dccb'],['--text','#1d1812'],['--muted','#6f6455']].forEach(([k,v]) => st.setProperty(k, v)); }
   if (R.brand_color && /^#[0-9a-fA-F]{6}$/.test(R.brand_color)) document.documentElement.style.setProperty('--accent', R.brand_color);
@@ -148,21 +149,25 @@ async function init(){
   if (saved) { orderId = saved; return track(); }
   renderMenu();
 }
+function openLang(){
+  $('sheetIn').innerHTML = `<h2>🌐 ${esc(t('lang'))}</h2><div class="lgl">${DF_LANGS.map(([c, n]) => `<button class="lgo ${c === dfLang() ? 'on' : ''}" data-lang="${c}">${esc(n)}</button>`).join('')}</div><button class="btn plain ghost" data-close="1">${esc(t('back'))}</button>`;
+  $('sheet').classList.add('show');
+}
 function fail(m){ $('app').innerHTML = `<div class="center">${esc(m)}</div>`; }
 
 function renderMenu(){
   const vis = items.filter(m => (!vegOnly || m.is_veg));
-  const groups = [...cats.map(c => ({ id: c.id, name: c.name })), { id: null, name: 'Other' }]
+  const groups = [...cats.map(c => ({ id: c.id, name: c.name })), { id: null, name: t('other') }]
     .map(g => ({ ...g, list: vis.filter(m => (m.category_id || null) === g.id) })).filter(g => g.list.length && (activeCat === 'all' || activeCat === g.id));
-  const chips = `<button class="chip ${activeCat==='all'?'on':''}" data-cat="all">All</button>` +
+  const chips = `<button class="chip ${activeCat==='all'?'on':''}" data-cat="all">${esc(t('all'))}</button>` +
     cats.map(c => `<button class="chip ${activeCat===c.id?'on':''}" data-cat="${c.id}">${esc(c.name)}</button>`).join('') +
-    `<button class="chip ${vegOnly?'on':''}" data-veg="1">🟢 Veg only</button>`;
+    `<button class="chip ${vegOnly?'on':''}" data-veg="1">🟢 ${esc(t('veg'))}</button>`;
   const total = Object.entries(cart).reduce((s,[id,q]) => s + q * +items.find(m => m.id === id).price, 0);
   const count = Object.values(cart).reduce((a,b) => a + b, 0);
   $('app').innerHTML = `
-    <header>${R.logo_url ? `<img class="rlg" src="${esc(R.logo_url)}" alt="">` : ''}<img class="olg" src="icons/logo-96.png" alt="CaffCrew" width="32" height="32"><h1>${esc(R.name)}</h1>${T ? `<span class="tb">Table ${esc(T.label)}</span>` : ''}<div class="chips">${chips}</div></header>
-    <div class="wrap">${groups.map(g => `<div class="cat">${esc(g.name)}</div>` + g.list.map(dish).join('')).join('') || '<div class="center">No dishes available yet.</div>'}</div>
-    ${count ? `<div class="bar ${justAdded ? 'bump' : ''}"><button class="btn" data-cart="1"><span>${count} item${count>1?'s':''}</span><span>View cart · ₹${total.toFixed(2)}</span></button></div>` : ''}`;
+    <header>${R.logo_url ? `<img class="rlg" src="${esc(R.logo_url)}" alt="">` : ''}<img class="olg" src="icons/logo-96.png" alt="CaffCrew" width="32" height="32"><h1>${esc(R.name)}</h1>${T ? `<span class="tb">${esc(t('table', { l: T.label }))}</span>` : ''}${langBtn()}<div class="chips">${chips}</div></header>
+    <div class="wrap">${groups.map(g => `<div class="cat">${esc(g.name)}</div>` + g.list.map(dish).join('')).join('') || `<div class="center">${esc(t('empty'))}</div>`}</div>
+    ${count ? `<div class="bar ${justAdded ? 'bump' : ''}"><button class="btn" data-cart="1"><span>${esc(t(count === 1 ? 'item1' : 'items', { n: count }))}</span><span>${esc(t('cart'))} · ₹${total.toFixed(2)}</span></button></div>` : ''}`;
   justAdded = false;
 }
 function dish(m){
@@ -171,8 +176,8 @@ function dish(m){
   return `<div class="dish">${thumb}
     <div class="in"><h3><span class="dot ${m.is_veg?'veg':'nv'}"></span>${esc(m.name)}</h3>
     ${m.description ? `<p>${esc(m.description)}</p>` : ''}
-    ${(m.allergens||[]).length ? `<div class="al">⚠ Contains: ${m.allergens.map(esc).join(', ')}</div>` : ''}
-    <div class="pr"><b>₹${esc(m.price)}</b>${q ? `<div class="qty"><button data-dec="${m.id}" aria-label="Remove one">−</button>${q}<button data-inc="${m.id}" aria-label="Add one">+</button></div>` : `<button class="add" data-inc="${m.id}">ADD</button>`}</div></div></div>`;
+    ${(m.allergens||[]).length ? `<div class="al">⚠ ${esc(t('contains'))}: ${m.allergens.map(esc).join(', ')}</div>` : ''}
+    <div class="pr"><b>₹${esc(m.price)}</b>${q ? `<div class="qty"><button data-dec="${m.id}" aria-label="Remove one">−</button>${q}<button data-inc="${m.id}" aria-label="Add one">+</button></div>` : `<button class="add" data-inc="${m.id}">${esc(t('add'))}</button>`}</div></div></div>`;
 }
 
 /* a dot flies from the button to the cart bar */
@@ -198,14 +203,14 @@ let coupon = null;
 function openCart(){
   const rows = Object.entries(cart).map(([id,q]) => { const m = items.find(x => x.id === id); return `<div class="ci"><span>${q} × ${esc(m.name)}</span><span>₹${(q*m.price).toFixed(2)}</span></div>`; }).join('');
   const total = Object.entries(cart).reduce((s,[id,q]) => s + q * +items.find(m => m.id === id).price, 0);
-  $('sheetIn').innerHTML = `<h2>Your order</h2>${rows}
-    <textarea id="note" rows="2" maxlength="300" placeholder="Special instructions (optional)"></textarea>
-    <div class="cprow"><input id="cp" placeholder="Coupon code" maxlength="20" autocapitalize="characters" autocomplete="off"><button type="button" class="btn plain ghost" id="cpApply">Apply</button></div><div class="msg" id="cpmsg"></div>
-    <div class="ci" id="discRow" style="display:none;color:var(--ok)"><span>Discount (<span id="dcode"></span>)</span><span id="dval"></span></div>
-    <div class="tot"><span>Total</span><span id="totv">₹${total.toFixed(2)}</span></div>
-    <div style="font-size:13px;color:var(--muted)">${R.upi_id ? 'You can pay by UPI after ordering, or at the counter.' : 'Pay at the counter or to the waiter after your meal.'}</div>
-    <button class="btn plain" id="place" style="margin-top:16px">Place order</button>
-    <button class="btn plain ghost" data-close="1" style="margin-top:8px">Back to menu</button>
+  $('sheetIn').innerHTML = `<h2>${esc(t('yourOrder'))}</h2>${rows}
+    <textarea id="note" rows="2" maxlength="300" placeholder="${esc(t('note'))}"></textarea>
+    <div class="cprow"><input id="cp" placeholder="${esc(t('coupon'))}" maxlength="20" autocapitalize="characters" autocomplete="off"><button type="button" class="btn plain ghost" id="cpApply">${esc(t('apply'))}</button></div><div class="msg" id="cpmsg"></div>
+    <div class="ci" id="discRow" style="display:none;color:var(--ok)"><span>${esc(t('discount'))} (<span id="dcode"></span>)</span><span id="dval"></span></div>
+    <div class="tot"><span>${esc(t('total'))}</span><span id="totv">₹${total.toFixed(2)}</span></div>
+    <div style="font-size:13px;color:var(--muted)">${esc(R.upi_id ? t('payUpi') : t('payCounter'))}</div>
+    <button class="btn plain" id="place" style="margin-top:16px">${esc(t('place'))}</button>
+    <button class="btn plain ghost" data-close="1" style="margin-top:8px">${esc(t('back'))}</button>
     <div class="msg err" id="cerr"></div>`;
   $('sheet').classList.add('show'); coupon = null;
   $('cpApply').onclick = async () => {
@@ -213,10 +218,10 @@ function openCart(){
     $('cpApply').disabled = true;
     const { data, error } = await dfClient.rpc('validate_coupon', { p_restaurant: R.id, p_code: code, p_subtotal: total });
     $('cpApply').disabled = false;
-    if (error || !data || !data.ok) { coupon = null; $('discRow').style.display = 'none'; $('totv').textContent = '₹' + total.toFixed(2); $('cpmsg').textContent = error ? 'Coupons are not available right now.' : data.message; $('cpmsg').className = 'msg err'; return; }
+    if (error || !data || !data.ok) { coupon = null; $('discRow').style.display = 'none'; $('totv').textContent = '₹' + total.toFixed(2); $('cpmsg').textContent = error ? t('cpNA') : data.message; $('cpmsg').className = 'msg err'; return; }
     coupon = { code: code.toUpperCase(), discount: +data.discount };
     $('dcode').textContent = coupon.code; $('dval').textContent = '−₹' + coupon.discount.toFixed(2); $('discRow').style.display = 'flex';
-    $('totv').textContent = '₹' + (total - coupon.discount).toFixed(2); $('cpmsg').textContent = 'Coupon applied ✓'; $('cpmsg').className = 'msg';
+    $('totv').textContent = '₹' + (total - coupon.discount).toFixed(2); $('cpmsg').textContent = t('cpOk'); $('cpmsg').className = 'msg';
   };
 }
 async function place(){
@@ -230,8 +235,8 @@ async function place(){
   $('sheet').classList.remove('show'); track();
 }
 
-const STEPS = [['pending','Received','📝'],['preparing','Preparing','👨‍🍳'],['ready','Ready','✅'],['served','Served','🍽️']];
-const HEAD = { pending: ['Order received', 'The kitchen has your order.'], preparing: ['Being prepared', 'Your food is on the way.'], ready: ['Ready!', 'Your order is ready. Enjoy.'], served: ['Enjoy your meal', 'Thank you for ordering.'], cancelled: ['Order cancelled', 'Please ask the staff for help.'] };
+const STEPS = [['pending','','📝'],['preparing','','👨‍🍳'],['ready','','✅'],['served','','🍽️']];
+const headOf = st => [t('h_' + (st in { pending: 1, preparing: 1, ready: 1, served: 1, cancelled: 1 } ? st : 'pending')), t('d_' + (st in { pending: 1, preparing: 1, ready: 1, served: 1, cancelled: 1 } ? st : 'pending'))];
 
 async function track(){
   clearInterval(pollTimer); lastKey = null;
@@ -242,22 +247,22 @@ async function track(){
     const key = [o.status, o.payment_status, o.total].join('|');
     if (key === lastKey) return;                 // nothing changed: keep animations running
     lastKey = key;
-    const idx = STEPS.findIndex(s => s[0] === o.status), fin = o.status === 'ready' || o.status === 'served', h = HEAD[o.status] || HEAD.pending;
+    const idx = STEPS.findIndex(s => s[0] === o.status), fin = o.status === 'ready' || o.status === 'served', h = headOf(o.status);
     const upi = o.payment_status !== 'paid' && R.upi_id && o.status !== 'cancelled'
-      ? `<a class="btn plain" style="margin-top:12px" href="${esc('upi://pay?pa=' + encodeURIComponent(R.upi_id) + '&pn=' + encodeURIComponent(R.name) + '&am=' + Number(o.total).toFixed(2) + '&cu=INR&tn=' + encodeURIComponent('Order ' + (T ? 'Table ' + T.label : '')))}">Pay ₹${Number(o.total).toFixed(2)} with UPI</a><div style="font-size:12px;color:var(--muted);margin-top:8px;text-align:center">After paying, staff will confirm your payment.</div>` : '';
-    $('app').innerHTML = `<header>${R.logo_url ? `<img class="rlg" src="${esc(R.logo_url)}" alt="">` : ''}<img class="olg" src="icons/logo-96.png" alt="CaffCrew" width="32" height="32"><h1>${esc(R.name)}</h1>${T ? `<span class="tb">Table ${esc(T.label)}</span>` : ''}</header>
+      ? `<a class="btn plain" style="margin-top:12px" href="${esc('upi://pay?pa=' + encodeURIComponent(R.upi_id) + '&pn=' + encodeURIComponent(R.name) + '&am=' + Number(o.total).toFixed(2) + '&cu=INR&tn=' + encodeURIComponent('Order ' + (T ? 'Table ' + T.label : '')))}">${esc(t('payWith', { a: Number(o.total).toFixed(2) }))}</a><div style="font-size:12px;color:var(--muted);margin-top:8px;text-align:center">${esc(t('afterPay'))}</div>` : '';
+    $('app').innerHTML = `<header>${R.logo_url ? `<img class="rlg" src="${esc(R.logo_url)}" alt="">` : ''}<img class="olg" src="icons/logo-96.png" alt="CaffCrew" width="32" height="32"><h1>${esc(R.name)}</h1>${T ? `<span class="tb">${esc(t('table', { l: T.label }))}</span>` : ''}${langBtn()}</header>
       <div class="wrap">
       <div class="hero">${o.status === 'cancelled' ? '' : fin ? '<div class="done">✓</div>' : '<div class="scene"><div class="cube"><i>🍳</i><i>🍽️</i><i>🥘</i><i>🫓</i><i>🍛</i><i>☕</i></div></div>'}
         <h2>${h[0]}</h2><p>${h[1]}</p></div>
-      ${o.status === 'cancelled' ? '' : `<div class="steps">${STEPS.map((s,i) => `<div class="st ${i<=idx?'on':''} ${i===idx?'cur':''}"><i>${i<idx?'✓':s[2]}</i>${s[1]}</div>`).join('')}</div>`}
-      <div class="card"><div style="display:flex;justify-content:space-between;align-items:center"><b style="font:700 20px var(--display)">₹${Number(o.total).toFixed(2)}</b><span style="color:${o.payment_status === 'paid' ? 'var(--ok)' : 'var(--muted)'};font-size:14px">${o.payment_status === 'paid' ? '✅ Paid' : (R.upi_id ? 'Pay online or at the counter' : 'Pay at the counter')}</span></div>${upi}</div>
-      <div class="card"><b>Need something?</b><div class="help">
-        <button data-call="water">💧 Water</button><button data-call="napkin">🧻 Napkins</button><button data-call="assistance">🙋 Waiter</button><button data-call="bill">🧾 Bill</button></div>
+      ${o.status === 'cancelled' ? '' : `<div class="steps">${STEPS.map((s,i) => `<div class="st ${i<=idx?'on':''} ${i===idx?'cur':''}"><i>${i<idx?'✓':s[2]}</i>${esc(t('s_' + s[0]))}</div>`).join('')}</div>`}
+      <div class="card"><div style="display:flex;justify-content:space-between;align-items:center"><b style="font:700 20px var(--display)">₹${Number(o.total).toFixed(2)}</b><span style="color:${o.payment_status === 'paid' ? 'var(--ok)' : 'var(--muted)'};font-size:14px">${o.payment_status === 'paid' ? '✅ ' + t('paid') : (R.upi_id ? t('payBoth') : t('payCash'))}</span></div>${upi}</div>
+      <div class="card"><b>${esc(t('need'))}</b><div class="help">
+        <button data-call="water">💧 ${esc(t('water'))}</button><button data-call="napkin">🧻 ${esc(t('napkins'))}</button><button data-call="assistance">🙋 ${esc(t('waiter'))}</button><button data-call="bill">🧾 ${esc(t('bill'))}</button></div>
         <div class="msg" id="cmsg"></div></div>
-      ${fin ? `<div class="card"><b>How was it?</b><div class="stars" id="stars">${[1,2,3,4,5].map(n => `<button data-star="${n}" aria-label="${n} stars">★</button>`).join('')}</div>
-        <textarea id="fbt" rows="2" maxlength="500" placeholder="Comments (optional)"></textarea>
-        <button class="btn plain" id="fbsend" style="margin-top:12px">Send feedback</button><div class="msg" id="fmsg"></div></div>` : ''}
-      <button class="btn plain ghost" data-neworder="1" style="margin-top:18px">Order more</button>
+      ${fin ? `<div class="card"><b>${esc(t('how'))}</b><div class="stars" id="stars">${[1,2,3,4,5].map(n => `<button data-star="${n}" aria-label="${n} stars">★</button>`).join('')}</div>
+        <textarea id="fbt" rows="2" maxlength="500" placeholder="${esc(t('comments'))}"></textarea>
+        <button class="btn plain" id="fbsend" style="margin-top:12px">${esc(t('sendFb'))}</button><div class="msg" id="fmsg"></div></div>` : ''}
+      <button class="btn plain ghost" data-neworder="1" style="margin-top:18px">${esc(t('orderMore'))}</button>
       </div>`;
     if (celebrate) { celebrate = false; burst(); }
   };
@@ -266,6 +271,8 @@ async function track(){
 
 document.addEventListener('click', async e => {
   const t = e.target.closest('button, a'); if (!t) return; const d = t.dataset;
+  if (d.openlang) openLang();
+  if (d.lang) { setLang(d.lang); $('sheet').classList.remove('show'); lastKey = null; if (R) { if (orderId) track(); else renderMenu(); } }
   if (d.cat) { activeCat = d.cat === 'all' ? 'all' : d.cat; renderMenu(); }
   if (d.veg) { vegOnly = !vegOnly; renderMenu(); }
   if (d.inc) { fly(t); cart[d.inc] = (cart[d.inc] || 0) + 1; justAdded = true; renderMenu(); }
@@ -275,16 +282,16 @@ document.addEventListener('click', async e => {
   if (t.id === 'place') place();
   if (d.neworder) { clearInterval(pollTimer); localStorage.removeItem('df_order_' + R.id); orderId = null; lastKey = null; renderMenu(); }
   if (d.call) {
-    if (!T) { $('cmsg').textContent = 'Table not detected. Please ask the staff.'; $('cmsg').className = 'msg err'; return; }
+    if (!T) { $('cmsg').textContent = t('noTable'); $('cmsg').className = 'msg err'; return; }
     let { error } = await dfClient.rpc('call_waiter', { p_restaurant: R.id, p_table: T.id, p_reason: d.call });
     if (error && d.call === 'bill') ({ error } = await dfClient.rpc('call_waiter', { p_restaurant: R.id, p_table: T.id, p_reason: 'assistance' }));
-    $('cmsg').textContent = error ? error.message : 'Staff have been notified ✓'; $('cmsg').className = 'msg ' + (error ? 'err' : '');
+    $('cmsg').textContent = error ? error.message : t('notified') + ' ✓'; $('cmsg').className = 'msg ' + (error ? 'err' : '');
   }
   if (d.star) { rating = +d.star; document.querySelectorAll('#stars button').forEach(b => b.classList.toggle('on', +b.dataset.star <= rating)); }
   if (t.id === 'fbsend') {
-    if (!rating) { $('fmsg').textContent = 'Tap a star rating first.'; $('fmsg').className = 'msg err'; return; }
+    if (!rating) { $('fmsg').textContent = t('tapStar'); $('fmsg').className = 'msg err'; return; }
     const { error } = await dfClient.rpc('submit_feedback', { p_order: orderId, p_rating: rating, p_comment: $('fbt').value.trim() || null });
-    $('fmsg').textContent = error ? error.message : 'Thank you! 🧡'; $('fmsg').className = 'msg ' + (error ? 'err' : '');
+    $('fmsg').textContent = error ? error.message : t('thanks') + ' 🧡'; $('fmsg').className = 'msg ' + (error ? 'err' : '');
     if (!error) t.disabled = true;
   }
 });
