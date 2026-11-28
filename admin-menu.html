@@ -48,6 +48,7 @@
         <div><label>Price (₹)</label><input id="price" type="number" min="0" step="0.01" required inputmode="decimal"></div>
       </div>
       <label>Category</label><select id="cat"></select>
+      <label>Kitchen station</label><input id="station" list="stlist" placeholder="Kitchen" maxlength="30" autocomplete="off"><datalist id="stlist"></datalist>
       <label>Description</label><textarea id="desc" rows="2" maxlength="300"></textarea>
       <label>Image URL (optional)</label><input id="img" type="url" placeholder="https://...">
       <label>Allergens (comma separated)</label><input id="alg" placeholder="nuts, dairy, gluten">
@@ -77,6 +78,8 @@ async function load(){
     dfClient.from('menu_items').select('*').eq('restaurant_id', R.id).order('name')
   ]);
   cats = c.data || []; items = i.data || [];
+  const sts = new Set(['Kitchen', 'Pizza', 'Burger', 'Drinks', 'Desserts', 'Tandoor']); items.forEach(m => m.station && sts.add(m.station));
+  $('stlist').innerHTML = [...sts].map(x => `<option value="${esc(x)}">`).join('');
   render();
 }
 function render(){
@@ -87,7 +90,7 @@ function render(){
     <div class="item">
       ${m.image_url ? `<img src="${esc(m.image_url)}" alt="">` : '<img alt="">'}
       <div class="info"><span class="dot ${m.is_veg?'veg':'nv'}"></span><b>${esc(m.name)}</b> · ₹${esc(m.price)}
-        <small>${esc(cname(m.category_id))}${m.is_available?'':' · Hidden'}</small></div>
+        <small>${esc(cname(m.category_id))}${m.station ? ' · 🍳 ' + esc(m.station) : ''}${m.is_available?'':' · Hidden'}</small></div>
       <div class="acts">
         <button class="btn sm ghost" data-toggle="${m.id}">${m.is_available?'Hide':'Show'}</button>
         <button class="btn sm ghost" data-edit="${m.id}">Edit</button>
@@ -111,7 +114,7 @@ $('itemForm').addEventListener('submit', async e => {
   const row = {
     restaurant_id: R.id, category_id: $('cat').value || null, name: $('name').value.trim(),
     description: $('desc').value.trim() || null, price: parseFloat($('price').value),
-    image_url: $('img').value.trim() || null, is_veg: $('veg').checked, is_available: $('avail').checked,
+    image_url: $('img').value.trim() || null, is_veg: $('veg').checked, is_available: $('avail').checked, station: $('station').value.trim() || 'Kitchen',
     allergens: $('alg').value.split(',').map(s => s.trim().toLowerCase()).filter(Boolean)
   };
   const q = editId ? dfClient.from('menu_items').update(row).eq('id', editId) : dfClient.from('menu_items').insert(row);
@@ -130,7 +133,7 @@ document.addEventListener('click', async e => {
   if (t.dataset.edit) {
     const m = items.find(x => x.id === t.dataset.edit); editId = m.id;
     $('name').value = m.name; $('price').value = m.price; $('cat').value = m.category_id || '';
-    $('desc').value = m.description || ''; $('img').value = m.image_url || ''; $('alg').value = (m.allergens || []).join(', ');
+    $('desc').value = m.description || ''; $('img').value = m.image_url || ''; $('alg').value = (m.allergens || []).join(', '); $('station').value = m.station || '';
     $('veg').checked = m.is_veg; $('avail').checked = m.is_available;
     $('formTitle').textContent = 'Edit dish'; $('cancel').style.display = 'block';
     $('itemForm').scrollIntoView({ behavior: 'smooth' });

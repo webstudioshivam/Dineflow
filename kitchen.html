@@ -23,7 +23,7 @@
 .tag.u{background:#33201a;color:#ff9a4d}
 .bar2{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .tm{font-variant-numeric:tabular-nums;font-weight:700;color:var(--ok)}.tm.warn{color:#ffb020}.tm.late{color:var(--err)}.o.late{border-color:var(--err);animation:lt 1.4s ease-in-out infinite}@keyframes lt{50%{box-shadow:0 0 0 3px rgba(255,107,94,.3)}}
-.wake{margin-left:8px}</style>
+.wake{margin-left:8px}.stn{font-size:11px;background:#2a2118;border:1px solid var(--line);border-radius:99px;padding:0 8px;color:var(--muted);margin-left:4px}.stbar .btn b{margin-left:4px;opacity:.8}</style>
 
 
 
@@ -57,6 +57,7 @@
 
   <div class="panel" id="callsPanel" style="display:none"><b>🔔 Waiter calls</b><div id="calls"></div></div>
 
+  <div class="bar2 stbar" id="stbar" style="margin-top:12px"></div>
   <div class="board">
     <div class="col"><h3>NEW <span id="n1">0</span></h3><div id="c1"></div></div>
     <div class="col"><h3>PREPARING <span id="n2">0</span></h3><div id="c2"></div></div>
@@ -85,11 +86,15 @@ function beep(){
 $('fs').onclick = () => { document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen && document.documentElement.requestFullscreen(); };
 $('snd').onclick = () => { sound = !sound; $('snd').textContent = sound ? '🔔 Sound on' : '🔇 Enable sound'; if (sound) { beep(); } };
 
+const stn = i => (i.station && String(i.station).trim()) || 'Kitchen';
+let STN = ''; try { STN = localStorage.getItem('df_station') || ''; } catch (e) {}
+const mine = o => STN ? (o.order_items || []).filter(i => stn(i) === STN) : (o.order_items || []);
+const multi = o => new Set((o.order_items || []).map(stn)).size > 1;
 function card(o, fresh){
   const next = { pending: ['preparing', 'Start preparing'], preparing: ['ready', 'Mark ready'], ready: ['served', 'Mark served'] }[o.status];
   return `<div class="o ${fresh ? 'new' : ''}">
     <div class="h"><b>${esc(label(o.table_id))}</b><span class="age"><span class="tm" data-ts="${o.created_at}"></span> · ₹${Number(o.total).toFixed(0)}</span></div>
-    <ul>${(o.order_items || []).map(i => `<li><b>${i.qty}×</b> ${esc(i.name)}</li>`).join('')}</ul>${o.coupon_code ? `<div class="note">🏷 ${esc(o.coupon_code)} · −₹${Number(o.discount).toFixed(0)}</div>` : ''}
+    <ul>${mine(o).map(i => `<li><b>${i.qty}×</b> ${esc(i.name)}${!STN && multi(o) ? ` <span class="stn">${esc(stn(i))}</span>` : ''}</li>`).join('')}</ul>${(o.order_items || []).length - mine(o).length ? `<div class="age">+${(o.order_items || []).length - mine(o).length} more at other stations</div>` : ''}${o.coupon_code ? `<div class="note">🏷 ${esc(o.coupon_code)} · −₹${Number(o.discount).toFixed(0)}</div>` : ''}
     ${o.note ? `<div class="note">📝 ${esc(o.note)}</div>` : ''}
     <div class="acts">
       <button class="btn sm" data-id="${o.id}" data-to="${next[0]}">${next[1]}</button>
@@ -107,8 +112,12 @@ async function load(){
   ]);
   if (o.error) { $('live').textContent = o.error.message; return; }
   (t.data || []).forEach(x => tables[x.id] = x.label);
-  const orders = o.data || [];
-  const ids = new Set(orders.map(x => x.id));
+  const all = o.data || [];
+  const stSet = new Set(); all.forEach(x => (x.order_items || []).forEach(i => stSet.add(stn(i)))); if (STN) stSet.add(STN);
+  const cnt = s => all.filter(x => (x.order_items || []).some(i => stn(i) === s)).length;
+  $('stbar').innerHTML = stSet.size > 1 ? `<button class="btn sm ${STN ? 'ghost' : ''}" data-st="">All <b>${all.length}</b></button>` + [...stSet].sort().map(s => `<button class="btn sm ${STN === s ? '' : 'ghost'}" data-st="${esc(s)}">${esc(s)} <b>${cnt(s)}</b></button>`).join('') : '';
+  const orders = STN ? all.filter(x => (x.order_items || []).some(i => stn(i) === STN)) : all;
+  const ids = new Set(all.map(x => x.id));
   const fresh = seen ? orders.filter(x => !seen.has(x.id)) : [];
   if (fresh.length) beep();
   const freshIds = new Set(fresh.map(x => x.id)); seen = ids;
@@ -123,6 +132,7 @@ async function load(){
   $('calls').innerHTML = calls.map(x => `<div class="call"><span><b>${esc(label(x.table_id))}</b> · ${esc(RL[x.reason] || x.reason)} <span class="age">${ago(x.created_at)}</span></span><button class="btn sm" data-call="${x.id}">Done</button></div>`).join('');
 }
 
+document.addEventListener('click', e => { const b = e.target.closest('[data-st]'); if (!b) return; STN = b.dataset.st; try { localStorage.setItem('df_station', STN); } catch (x) {} load(); });
 document.addEventListener('click', async e => {
   const b = e.target.closest('button'); if (!b) return;
   if (b.dataset.to) { b.disabled = true; await dfClient.from('orders').update({ status: b.dataset.to }).eq('id', b.dataset.id); load(); }
