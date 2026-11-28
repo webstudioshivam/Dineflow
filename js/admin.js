@@ -5,6 +5,7 @@ const NAV = [
   ['dashboard.html','Home',['owner','manager']],
   ['admin-menu.html','Menu',['owner','manager']],
   ['admin-tables.html','Tables & QR',['owner','manager','waiter']],
+  ['floor.html','Floor',['owner','manager','waiter']],
   ['kitchen.html','Kitchen',['owner','manager','kitchen','waiter']],
   ['admin-analytics.html','Analytics',['owner','manager']],
   ['admin-staff.html','Staff',['owner']],
