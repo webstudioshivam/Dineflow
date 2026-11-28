@@ -194,22 +194,37 @@ function burst(){
   }
 }
 
+let coupon = null;
 function openCart(){
   const rows = Object.entries(cart).map(([id,q]) => { const m = items.find(x => x.id === id); return `<div class="ci"><span>${q} × ${esc(m.name)}</span><span>₹${(q*m.price).toFixed(2)}</span></div>`; }).join('');
   const total = Object.entries(cart).reduce((s,[id,q]) => s + q * +items.find(m => m.id === id).price, 0);
   $('sheetIn').innerHTML = `<h2>Your order</h2>${rows}
     <textarea id="note" rows="2" maxlength="300" placeholder="Special instructions (optional)"></textarea>
-    <div class="tot"><span>Total</span><span>₹${total.toFixed(2)}</span></div>
+    <div class="cprow"><input id="cp" placeholder="Coupon code" maxlength="20" autocapitalize="characters" autocomplete="off"><button type="button" class="btn plain ghost" id="cpApply">Apply</button></div><div class="msg" id="cpmsg"></div>
+    <div class="ci" id="discRow" style="display:none;color:var(--ok)"><span>Discount (<span id="dcode"></span>)</span><span id="dval"></span></div>
+    <div class="tot"><span>Total</span><span id="totv">₹${total.toFixed(2)}</span></div>
     <div style="font-size:13px;color:var(--muted)">${R.upi_id ? 'You can pay by UPI after ordering, or at the counter.' : 'Pay at the counter or to the waiter after your meal.'}</div>
     <button class="btn plain" id="place" style="margin-top:16px">Place order</button>
     <button class="btn plain ghost" data-close="1" style="margin-top:8px">Back to menu</button>
     <div class="msg err" id="cerr"></div>`;
-  $('sheet').classList.add('show');
+  $('sheet').classList.add('show'); coupon = null;
+  $('cpApply').onclick = async () => {
+    const code = $('cp').value.trim(); if (!code) return;
+    $('cpApply').disabled = true;
+    const { data, error } = await dfClient.rpc('validate_coupon', { p_restaurant: R.id, p_code: code, p_subtotal: total });
+    $('cpApply').disabled = false;
+    if (error || !data || !data.ok) { coupon = null; $('discRow').style.display = 'none'; $('totv').textContent = '₹' + total.toFixed(2); $('cpmsg').textContent = error ? 'Coupons are not available right now.' : data.message; $('cpmsg').className = 'msg err'; return; }
+    coupon = { code: code.toUpperCase(), discount: +data.discount };
+    $('dcode').textContent = coupon.code; $('dval').textContent = '−₹' + coupon.discount.toFixed(2); $('discRow').style.display = 'flex';
+    $('totv').textContent = '₹' + (total - coupon.discount).toFixed(2); $('cpmsg').textContent = 'Coupon applied ✓'; $('cpmsg').className = 'msg';
+  };
 }
 async function place(){
   $('place').disabled = true; $('cerr').textContent = '';
   const payload = Object.entries(cart).map(([item_id, qty]) => ({ item_id, qty }));
-  const { data, error } = await dfClient.rpc('place_order', { p_restaurant: R.id, p_table: T ? T.id : null, p_items: payload, p_note: $('note').value.trim() || null });
+  const args = { p_restaurant: R.id, p_table: T ? T.id : null, p_items: payload, p_note: $('note').value.trim() || null };
+  if (coupon) args.p_coupon = coupon.code;
+  const { data, error } = await dfClient.rpc('place_order', args);
   if (error) { $('cerr').textContent = error.message; $('place').disabled = false; return; }
   orderId = data; localStorage.setItem('df_order_' + R.id, orderId); cart = {}; celebrate = true;
   $('sheet').classList.remove('show'); track();

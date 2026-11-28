@@ -89,7 +89,7 @@ function card(o, fresh){
   const next = { pending: ['preparing', 'Start preparing'], preparing: ['ready', 'Mark ready'], ready: ['served', 'Mark served'] }[o.status];
   return `<div class="o ${fresh ? 'new' : ''}">
     <div class="h"><b>${esc(label(o.table_id))}</b><span class="age"><span class="tm" data-ts="${o.created_at}"></span> · ₹${Number(o.total).toFixed(0)}</span></div>
-    <ul>${(o.order_items || []).map(i => `<li><b>${i.qty}×</b> ${esc(i.name)}</li>`).join('')}</ul>
+    <ul>${(o.order_items || []).map(i => `<li><b>${i.qty}×</b> ${esc(i.name)}</li>`).join('')}</ul>${o.coupon_code ? `<div class="note">🏷 ${esc(o.coupon_code)} · −₹${Number(o.discount).toFixed(0)}</div>` : ''}
     ${o.note ? `<div class="note">📝 ${esc(o.note)}</div>` : ''}
     <div class="acts">
       <button class="btn sm" data-id="${o.id}" data-to="${next[0]}">${next[1]}</button>
