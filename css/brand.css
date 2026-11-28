@@ -48,3 +48,8 @@ h1,h2,h3{text-wrap:balance}p,li{text-wrap:pretty}
 .dftoast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:9999;background:#1c1a17;color:#f4efe8;border:1px solid #2f2b26;border-radius:14px;padding:14px 18px;font:500 15px var(--df-body);max-width:90vw;box-shadow:0 14px 40px rgba(0,0,0,.5)}
 @media(prefers-reduced-motion:reduce){.coin,.coin *,.logo .lg{animation:none!important;transition:none!important}}
 .lt{font-style:normal}
+
+.tag{font-size:12px;border-radius:99px;padding:1px 9px;background:#12301f;color:var(--ok,#5fd68a);white-space:nowrap}.tag.u{background:#33201a;color:#ff9a4d}
+.df-order header .rlg{float:left;width:34px;height:34px;border-radius:50%;object-fit:cover;margin:2px 10px 0 0}
+.df-order .help{flex-wrap:wrap}.df-order .help button{flex:1 1 22%;padding:12px 2px;font-size:13px}
+@media(max-width:560px){.df-app .grid{grid-template-columns:repeat(2,1fr);gap:10px}.df-app .stat{padding:14px}.df-app .stat b{font-size:24px}}
