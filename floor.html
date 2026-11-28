@@ -51,7 +51,8 @@
 <div class="nav" id="nav"></div>
 <div class="wrap" style="max-width:1200px">
   <div class="bar2" style="justify-content:space-between"><h2>Floor</h2>
-    <div class="bar2"><span id="live" class="tag u">connecting…</span><button class="btn sm ghost" id="snd">🔇 Enable sound</button></div></div>
+    <div class="bar2"><button class="btn sm" id="duty" style="display:none">🟢 On duty</button><span id="live" class="tag u">connecting…</span><button class="btn sm ghost" id="snd">🔇 Enable sound</button></div></div>
+  <div id="offb" style="display:none;background:#2a1d10;border:1px solid #6b4a1f;color:#f0c987;padding:10px 12px;border-radius:12px;font-size:14px;margin:8px 0">You are off duty. Alert sounds are muted, but you can still see the board.</div>
   <p style="color:var(--muted);font-size:14px">Only what needs a waiter: table calls, food ready to serve, and bills to collect.</p>
   <div class="board">
     <div class="col"><h3>TABLE CALLS <span id="n1">0</span></h3><div id="c1"></div></div>
@@ -63,14 +64,27 @@
 <script src="js/config.js"></script>
 <script src="js/admin.js"></script>
 <script>
-let R, tables = {}, seen = null, sound = false, actx;
+let R, tables = {}, seen = null, sound = false, actx, onDuty = true, dutyOk = false;
 const RL = { water: '💧 Water', napkin: '🧻 Napkins', assistance: '🙋 Needs waiter', bill: '🧾 Bill please' };
 const label = id => tables[id] ? 'Table ' + tables[id] : 'No table';
 const age = ts => { const sec = Math.max(0, Math.floor((Date.now() - new Date(ts)) / 1000)); return String(Math.floor(sec / 60)).padStart(2, '0') + ':' + String(sec % 60).padStart(2, '0'); };
 function tick(){ document.querySelectorAll('[data-ts]').forEach(e => { const m = Math.floor((Date.now() - new Date(e.dataset.ts)) / 60000); e.textContent = '⏱ ' + age(e.dataset.ts); e.className = 'tm ' + (m >= 10 ? 'late' : m >= 5 ? 'warn' : ''); }); }
 setInterval(tick, 1000);
-function beep(){ if (!sound) return; try { actx = actx || new (window.AudioContext || window.webkitAudioContext)(); const o = actx.createOscillator(), g = actx.createGain(); o.connect(g); g.connect(actx.destination); o.frequency.value = 880; g.gain.value = .15; o.start(); o.stop(actx.currentTime + .25); } catch(e){} }
+function beep(){ if (!sound || !onDuty) return; try { actx = actx || new (window.AudioContext || window.webkitAudioContext)(); const o = actx.createOscillator(), g = actx.createGain(); o.connect(g); g.connect(actx.destination); o.frequency.value = 880; g.gain.value = .15; o.start(); o.stop(actx.currentTime + .25); } catch(e){} }
 $('snd').onclick = () => { sound = !sound; $('snd').textContent = sound ? '🔔 Sound on' : '🔇 Enable sound'; if (sound) beep(); };
+function paintDuty(){ $('duty').style.display = dutyOk ? '' : 'none'; $('duty').textContent = onDuty ? '🟢 On duty' : '⚪ Off duty'; $('duty').className = 'btn sm' + (onDuty ? '' : ' ghost'); $('offb').style.display = dutyOk && !onDuty ? '' : 'none'; }
+async function loadDuty(){
+  const { data, error } = await dfClient.rpc('my_duty', { p_restaurant: R.id });
+  if (error) return; // SQL not run yet: hide the toggle
+  dutyOk = true; onDuty = data !== false; paintDuty();
+}
+$('duty').onclick = async () => {
+  const want = !onDuty; $('duty').disabled = true;
+  const { error } = await dfClient.rpc('set_my_duty', { p_restaurant: R.id, p_on: want });
+  $('duty').disabled = false;
+  if (error) return alert(error.message);
+  onDuty = want; paintDuty();
+};
 const pay = o => o.payment_status === 'paid' ? '<span class="tag">Paid</span>' : `<button class="btn sm" data-paid="${o.id}" data-method="cash">Paid · Cash</button><button class="btn sm ghost" data-paid="${o.id}" data-method="upi">Paid · UPI</button>`;
 const oCard = (o, serve) => `<div class="o"><div class="h"><b>${esc(label(o.table_id))}</b><span class="age"><span class="tm" data-ts="${o.created_at}"></span> · ₹${Number(o.total).toFixed(0)}</span></div>
   <ul>${(o.order_items || []).map(i => `<li><b>${i.qty}×</b> ${esc(i.name)}</li>`).join('')}</ul>
@@ -100,7 +114,7 @@ document.addEventListener('click', async e => {
   if (b.dataset.call) { b.disabled = true; await dfClient.from('waiter_calls').update({ is_resolved: true }).eq('id', b.dataset.call); load(); }
 });
 adminInit('floor.html').then(x => {
-  if (!x) return; R = x.r; load();
+  if (!x) return; R = x.r; load(); loadDuty();
   const f = 'restaurant_id=eq.' + R.id;
   dfClient.channel('floor-' + R.id)
     .on('postgres_changes', { event: '*', schema: 'public', table: 'orders', filter: f }, load)

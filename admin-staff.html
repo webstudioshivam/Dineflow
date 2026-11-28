@@ -54,13 +54,16 @@
 let R, me;
 const say = (t, c) => { $('msg').textContent = t; $('msg').className = 'msg ' + (c || ''); };
 async function load(){
-  const [s, i] = await Promise.all([
+  const [s, i, d] = await Promise.all([
     dfClient.rpc('list_staff', { p_restaurant: R.id }),
-    dfClient.from('staff_invites').select('*').eq('restaurant_id', R.id).order('created_at')
+    dfClient.from('staff_invites').select('*').eq('restaurant_id', R.id).order('created_at'),
+    dfClient.rpc('team_duty', { p_restaurant: R.id })
   ]);
+  const duty = {}; (d.data || []).forEach(x => duty[x.user_id] = x.on_duty);
+  const dTag = id => d.error || !(id in duty) ? '' : duty[id] ? '<span class="tag">🟢 On duty</span> ' : '<span class="tag u">⚪ Off duty</span> ';
   if (s.error) { $('team').innerHTML = `<p class="msg err">${esc(s.error.message)}</p>`; return; }
   $('team').innerHTML = (s.data || []).map(m => `<div class="item"><div class="info"><b>${esc(m.email)}</b><small>${esc(m.role)}</small></div>
-    <div class="acts">${m.role === 'owner' ? '<span class="tag">Owner</span>' : `<button class="btn sm danger" data-rm="${m.user_id}">Remove</button>`}</div></div>`).join('');
+    <div class="acts">${dTag(m.user_id)}${m.role === 'owner' ? '<span class="tag">Owner</span>' : `<button class="btn sm danger" data-rm="${m.user_id}">Remove</button>`}</div></div>`).join('');
   $('inv').innerHTML = (i.data || []).map(x => `<div class="item"><div class="info">${esc(x.email)}<small>${esc(x.role)} · waiting to sign up</small></div>
     <div class="acts"><button class="btn sm danger" data-cancel="${esc(x.email)}">Cancel</button></div></div>`).join('') || '<p style="color:var(--muted);font-size:14px">None.</p>';
 }
